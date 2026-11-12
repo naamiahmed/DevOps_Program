@@ -2,262 +2,301 @@ import { useState } from 'react'
 import './App.css'
 
 // =============================================================================
-// 💡 STUDENTS LAB TASK 1: ADD OR CHANGE A JOKE HERE!
-// Change any setup or punchline, save, and watch your changes deploy!
+// 💡 STUDENTS / INSTRUCTOR: PRODUCT CATALOG DATA
+// Change any price, title, or description here, push to GitHub, and watch
+// your changes automatically build and deploy through the CI/CD pipeline!
 // =============================================================================
-const DEV_JOKES = [
+const MENU_ITEMS = [
   {
     id: 1,
-    setup: 'Why do programmers always prefer dark mode?',
-    punchline: 'Because light attracts bugs! 🪲'
+    name: 'Ethiopian Yirgacheffe Pour-Over',
+    category: 'Single Origin Coffee',
+    price: '$4.75',
+    description: 'Delicate floral jasmine notes with vibrant citrus acidity and honey sweetness.',
+    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 2,
-    setup: 'There are only 10 types of people in the world...',
-    punchline: 'Those who understand binary, and those who don\'t! 🤖'
+    name: 'Signature Cold Brew Reserve',
+    category: 'Chilled Drinks',
+    price: '$5.25',
+    description: 'Steeped for 18 hours in cold filtered water. Smooth, chocolatey, and naturally sweet.',
+    image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 3,
-    setup: 'Why was the JavaScript developer sad?',
-    punchline: 'Because they didn\'t Node how to Express themselves! 📦'
+    name: 'Velvet Flat White',
+    category: 'Espresso & Milk',
+    price: '$4.50',
+    description: 'Double ristretto espresso paired with micro-foamed organic steamed milk.',
+    image: 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 4,
-    setup: 'A SQL query walks into a bar, walks up to two tables and asks...',
-    punchline: '"Can I JOIN you?" 🍻'
+    name: 'Caramelized Butter Croissant',
+    category: 'Fresh Bakery',
+    price: '$3.80',
+    description: 'Hand-rolled daily using French cultured butter. Flaky layers baked to golden perfection.',
+    image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 5,
-    setup: 'How many programmers does it take to change a lightbulb?',
-    punchline: 'None. That\'s a hardware problem! 💡'
+    name: 'Avocado Sourdough Toast',
+    category: 'Breakfast Kitchen',
+    price: '$8.50',
+    description: 'Crushed Hass avocado on toasted artisanal sourdough with chili flakes and microgreens.',
+    image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80'
+  },
+  {
+    id: 6,
+    name: 'House Blend Whole Beans (12oz)',
+    category: 'Packaged Beans',
+    price: '$16.00',
+    description: 'Locally small-batch roasted blend with tasting notes of toasted almond and dark cocoa.',
+    image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=600&q=80'
   }
 ]
 
-// =============================================================================
-// 💡 STUDENTS LAB TASK 2: CUSTOMIZE THE COFFEE STATUS MESSAGES!
-// =============================================================================
-const COFFEE_MESSAGES = [
-  '😴 Zombie Mode: Cannot process Git commands. Need coffee immediately!',
-  '☕ Cup 1: Compiling... Hello World is looking good.',
-  '⚡ Cup 2: In the zone! Writing 50 lines of untested code with supreme confidence.',
-  '🚀 Cup 3: Terminal wizard! Committing straight to main!',
-  '🔥 Cup 4+: Ascended being! Talking directly to the CPU in binary!'
+const REVIEWS = [
+  {
+    id: 1,
+    name: 'Sarah Jenkins',
+    role: 'Local Guide',
+    quote: 'The best flat white in town without question. The atmosphere is warm and the pastries are baked fresh every single morning.'
+  },
+  {
+    id: 2,
+    name: 'Marcus Chen',
+    role: 'Coffee Enthusiast',
+    quote: 'Their Ethiopian single origin pour-over is magnificent. Clean, bright, and roasted to perfection. A true neighborhood gem.'
+  },
+  {
+    id: 3,
+    name: 'Elena Rostova',
+    role: 'Neighborhood Regular',
+    quote: 'I pick up their cold brew and butter croissants three days a week. Exceptional quality and very friendly baristas!'
+  }
 ]
+
+const CURRENT_YEAR = new Date().getFullYear()
 
 export default function App() {
-  // Current Joke State
-  const [currentJokeIndex, setCurrentJokeIndex] = useState(0)
-  const [showPunchline, setShowPunchline] = useState(false)
+  const [cartCount, setCartCount] = useState(0)
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [subscribed, setSubscribed] = useState(false)
 
-  // Coffee Meter State
-  const [coffeeCount, setCoffeeCount] = useState(1)
-
-  // Bug or Feature Poll State
-  const [bugVotes, setBugVotes] = useState(42)
-  const [featureVotes, setFeatureVotes] = useState(128)
-  const [userVoted, setUserVoted] = useState(null)
-
-  // Panic Button State
-  const [isPanicking, setIsPanicking] = useState(false)
-
-  const currentJoke = DEV_JOKES[currentJokeIndex]
-
-  const handleNextJoke = () => {
-    setShowPunchline(false)
-    setCurrentJokeIndex((prev) => (prev + 1) % DEV_JOKES.length)
+  const handleAddToCart = () => {
+    setCartCount(prev => prev + 1)
   }
 
-  const handleDrinkCoffee = () => {
-    setCoffeeCount((prev) => prev + 1)
-  }
-
-  const handleResetCoffee = () => {
-    setCoffeeCount(0)
-  }
-
-  const handleVote = (choice) => {
-    if (userVoted) return
-    setUserVoted(choice)
-    if (choice === 'bug') {
-      setBugVotes((prev) => prev + 1)
-    } else {
-      setFeatureVotes((prev) => prev + 1)
+  const handleSubscribe = (e) => {
+    e.preventDefault()
+    if (newsletterEmail.trim()) {
+      setSubscribed(true)
+      setNewsletterEmail('')
     }
   }
 
-  const getCoffeeStatus = () => {
-    if (coffeeCount === 0) return COFFEE_MESSAGES[0]
-    if (coffeeCount === 1) return COFFEE_MESSAGES[1]
-    if (coffeeCount === 2) return COFFEE_MESSAGES[2]
-    if (coffeeCount === 3) return COFFEE_MESSAGES[3]
-    return COFFEE_MESSAGES[4]
-  }
-
   return (
-    <div className="app-wrapper">
-      {/* Friendly Header */}
-      <header className="top-header">
-        <div className="brand-badge">
-          <span>🚀 Deploying on Friday</span>
-          <span>&bull;</span>
-          <span>What could possibly go wrong?</span>
+    <div className="page-container">
+      {/* Top Navigation */}
+      <header className="navbar">
+        <div className="nav-content">
+          <a href="#" className="brand-logo">
+            <span className="brand-icon">☕</span>
+            <span>Brew &amp; Bean Co.</span>
+          </a>
+
+          <nav>
+            <ul className="nav-links">
+              <li><a href="#menu">Our Menu</a></li>
+              <li><a href="#story">Our Story</a></li>
+              <li><a href="#reviews">Reviews</a></li>
+              <li><a href="#visit">Visit Us</a></li>
+            </ul>
+          </nav>
+
+          <button className="cart-button" aria-label="Shopping Cart">
+            <span>Order</span>
+            <span className="cart-badge" data-testid="cart-count">{cartCount}</span>
+          </button>
         </div>
-        <h1 className="main-title">GitHappens ☕</h1>
-        <p className="main-subtitle">Turning coffee into code, bugs, and laughs since 2026</p>
       </header>
 
-      <div className="cards-grid">
-        {/* Card 1: Interactive Dev Joke */}
-        <section className="fun-card" aria-labelledby="joke-heading">
-          <div className="card-title-row">
-            <h2 id="joke-heading">🎭 Developer Comedy Club</h2>
-            <span className="tag-pill">Joke #{currentJoke.id} of {DEV_JOKES.length}</span>
+      {/* Hero Section */}
+      <section className="hero-section">
+        <img
+          src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1400&q=80"
+          alt="Artisan Coffee Roasters Cafe Interior"
+          className="hero-background"
+        />
+        <div className="hero-content">
+          <p className="hero-subtitle">Small-Batch Roasters &bull; Handcrafted Daily</p>
+          <h1 className="hero-title">Freshly Roasted Coffee, Crafted with Passion.</h1>
+          <p className="hero-desc">
+            We ethically source single-origin green beans from sustainable growers around the world, roasting them in small batches to highlight their unique character and flavor.
+          </p>
+          <div className="hero-actions">
+            <a href="#menu" className="btn-primary">Explore Menu</a>
+            <a href="#visit" className="btn-secondary">Visit Our Cafe</a>
           </div>
+        </div>
+      </section>
 
-          <p className="joke-setup">{currentJoke.setup}</p>
-
-          {showPunchline ? (
-            <div className="punchline-box" data-testid="punchline-box">
-              {currentJoke.punchline}
-            </div>
-          ) : null}
-
-          <div className="joke-actions">
-            {!showPunchline ? (
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowPunchline(true)}
-              >
-                🥁 Reveal Punchline
-              </button>
-            ) : (
-              <button
-                className="btn btn-purple"
-                onClick={handleNextJoke}
-              >
-                Next Joke 🔄
-              </button>
-            )}
-            <button
-              className="btn btn-secondary"
-              onClick={handleNextJoke}
-            >
-              Skip ⏭️
-            </button>
+      {/* Highlights Banner */}
+      <section className="highlights-bar">
+        <div className="highlights-content">
+          <div className="highlight-item">
+            <h3>🌱 100% Ethical Sourcing</h3>
+            <p>Direct trade partnerships with sustainable family farms.</p>
           </div>
-        </section>
-
-        {/* Card 2: Interactive Coffee-O-Meter */}
-        <section className="fun-card" aria-labelledby="coffee-heading">
-          <div className="card-title-row">
-            <h2 id="coffee-heading">☕ Coffee-O-Meter</h2>
-            <span className="tag-pill">Developer Fuel</span>
+          <div className="highlight-item">
+            <h3>🔥 Roasted In-House</h3>
+            <p>Fresh weekly roasting profiles for peak aroma and flavor.</p>
           </div>
+          <div className="highlight-item">
+            <h3>🥐 Artisanal Bakery</h3>
+            <p>Pastries and sourdough baked from scratch every dawn.</p>
+          </div>
+        </div>
+      </section>
 
-          <div className="coffee-layout">
-            <div className="coffee-icon-box" aria-hidden="true">
-              {coffeeCount === 0 ? '😴' : coffeeCount >= 4 ? '🔥' : '☕'}
-            </div>
-            <div className="coffee-info">
-              <div className="coffee-count-text">
-                {coffeeCount} {coffeeCount === 1 ? 'Cup' : 'Cups'} of Coffee Drank
+      {/* Featured Menu & Store Catalog */}
+      <section id="menu" className="section">
+        <div className="section-header">
+          <p className="section-tag">Carefully Curated</p>
+          <h2 className="section-title">Our Seasonal Menu</h2>
+          <p className="section-desc">
+            From pour-overs to oven-fresh pastries, every single item is made fresh with high quality ingredients.
+          </p>
+        </div>
+
+        <div className="products-grid">
+          {MENU_ITEMS.map((item) => (
+            <article key={item.id} className="product-card" data-testid={`menu-item-${item.id}`}>
+              <img src={item.image} alt={item.name} className="product-image" loading="lazy" />
+              <div className="product-body">
+                <span className="product-category">{item.category}</span>
+                <h3 className="product-title">{item.name}</h3>
+                <p className="product-desc">{item.description}</p>
+                <div className="product-footer">
+                  <span className="product-price">{item.price}</span>
+                  <button
+                    className="btn-add"
+                    onClick={handleAddToCart}
+                    aria-label={`Add ${item.name} to order`}
+                  >
+                    + Add to Order
+                  </button>
+                </div>
               </div>
-              <p className="coffee-status-msg" data-testid="coffee-status">
-                {getCoffeeStatus()}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* Our Story Section */}
+      <div id="story" className="story-wrapper">
+        <section className="section">
+          <div className="story-grid">
+            <img
+              src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=900&q=80"
+              alt="Barista brewing specialty coffee"
+              className="story-image"
+              loading="lazy"
+            />
+            <div className="story-text">
+              <p className="section-tag">Since 2018</p>
+              <h3>Rooted in Community, Obsessed with Quality</h3>
+              <p>
+                Brew &amp; Bean began as a humble vintage coffee cart serving pour-overs at Saturday farmers markets. Today, our roastery and cafe serve as a neighborhood sanctuary where friends meet, ideas ignite, and coffee is celebrated as an art form.
               </p>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <button className="btn btn-primary" onClick={handleDrinkCoffee}>
-                  ☕ Drink Another Cup
-                </button>
-                <button className="btn btn-secondary" onClick={handleResetCoffee}>
-                  Reset
-                </button>
-              </div>
+              <p>
+                Every batch of beans is roasted with precision, monitoring temperature curves to ensure each origin&apos;s natural sweetness, floral notes, and chocolate undertones shine through.
+              </p>
             </div>
           </div>
         </section>
+      </div>
 
-        {/* Card 3: Interactive Poll: Bug or Feature? */}
-        <section className="fun-card" aria-labelledby="poll-heading">
-          <div className="card-title-row">
-            <h2 id="poll-heading">🗳️ The Eternal Debate</h2>
-            <span className="tag-pill">Community Poll</span>
+      {/* Customer Testimonials */}
+      <section id="reviews" className="section">
+        <div className="section-header">
+          <p className="section-tag">Customer Love</p>
+          <h2 className="section-title">What Our Guests Say</h2>
+          <p className="section-desc">Proudly serving over 500 cups of freshly roasted coffee daily.</p>
+        </div>
+
+        <div className="reviews-grid">
+          {REVIEWS.map((review) => (
+            <div key={review.id} className="review-card">
+              <div className="stars">★★★★★</div>
+              <p className="review-quote">&ldquo;{review.quote}&rdquo;</p>
+              <div className="reviewer-name">{review.name}</div>
+              <div className="reviewer-tag">{review.role}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Visit Us / Location & Hours */}
+      <section id="visit" className="section" style={{ paddingTop: '1rem' }}>
+        <div className="visit-box">
+          <div className="visit-item">
+            <h4>📍 Cafe Location</h4>
+            <p>142 Artisan Boulevard, Suite 100<br />Downtown Arts District</p>
           </div>
+          <div className="visit-item">
+            <h4>⏰ Opening Hours</h4>
+            <p>Mon &ndash; Fri: 6:30 AM &ndash; 6:00 PM<br />Sat &ndash; Sun: 7:30 AM &ndash; 7:00 PM</p>
+          </div>
+          <div className="visit-item">
+            <h4>📞 Contact &amp; Orders</h4>
+            <p>(555) 382-9104<br />hello@brewandbean.com</p>
+          </div>
+        </div>
 
-          <p className="poll-question">
-            &ldquo;The code works completely fine on my localhost, but immediately crashes on the server.&rdquo;
+        {/* Newsletter Subscription */}
+        <div style={{ marginTop: '3.5rem', textAlign: 'center' }}>
+          <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', marginBottom: '0.5rem' }}>
+            Join Our Coffee Club
+          </h3>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+            Subscribe to receive roast updates, brewing guides, and 10% off your first whole bean order.
           </p>
 
-          <div className="poll-options">
-            <button
-              className={`poll-btn ${userVoted === 'bug' ? 'voted-bug' : ''}`}
-              onClick={() => handleVote('bug')}
-            >
-              <span>🐛 Obviously a Bug</span>
-              <span className="vote-tally">{bugVotes} Votes</span>
-            </button>
-
-            <button
-              className={`poll-btn ${userVoted === 'feature' ? 'voted-feature' : ''}`}
-              onClick={() => handleVote('feature')}
-            >
-              <span>✨ Undocumented Feature</span>
-              <span className="vote-tally">{featureVotes} Votes</span>
-            </button>
-          </div>
-
-          {userVoted ? (
-            <p style={{ textAlign: 'center', color: '#10b981', fontWeight: 700 }}>
-              🎉 Thanks for voting! Your vote has been counted.
-            </p>
-          ) : null}
-        </section>
-
-        {/* Card 4: Friday Production Panic Button */}
-        <section className="fun-card" aria-labelledby="panic-heading">
-          <div className="card-title-row">
-            <h2 id="panic-heading">🚨 Production Emergency</h2>
-            <span className="tag-pill" style={{ background: '#fee2e2', color: '#dc2626' }}>Do Not Press</span>
-          </div>
-
-          {!isPanicking ? (
-            <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-              <p style={{ marginBottom: '1.25rem', color: 'var(--text-muted)' }}>
-                Did someone accidentally merge to <code>main</code> at 4:59 PM on Friday?
-              </p>
-              <button
-                className="btn btn-danger"
-                style={{ fontSize: '1.1rem', padding: '0.85rem 2rem' }}
-                onClick={() => setIsPanicking(true)}
-              >
-                🚨 Press The Panic Button
+          {!subscribed ? (
+            <form onSubmit={handleSubscribe} style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', maxWidth: '460px', margin: '0 auto', flexWrap: 'wrap' }}>
+              <input
+                type="email"
+                placeholder="Enter your email address"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                required
+                style={{ flex: 1, minWidth: '240px', padding: '0.75rem 1rem', border: '1px solid var(--border-light)', borderRadius: '6px', fontSize: '0.95rem' }}
+              />
+              <button type="submit" className="btn-primary" style={{ padding: '0.75rem 1.5rem', borderRadius: '6px' }}>
+                Subscribe
               </button>
-            </div>
+            </form>
           ) : (
-            <div className="panic-banner" data-testid="panic-banner">
-              <h3>🔥 DON&apos;T PANIC!</h3>
-              <p>Everything is fine! Initiating emergency rollback... It totally works on my machine anyway! 🐕☕</p>
-              <button
-                className="btn btn-secondary"
-                style={{ marginTop: '1rem' }}
-                onClick={() => setIsPanicking(false)}
-              >
-                Phew, False Alarm! Relieve Panic 😌
-              </button>
-            </div>
+            <p style={{ color: '#15803d', fontWeight: 600, fontSize: '1rem' }}>
+              🎉 Thank you for subscribing! Check your inbox for your 10% discount code.
+            </p>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
 
-      {/* Helpful note for students to learn how changing code triggers CI/CD */}
-      <div className="code-hint-box">
-        💡 <strong>Students:</strong> Open <code>frontend/src/App.jsx</code>, add your own custom joke to <code>DEV_JOKES</code>, and push to GitHub. Watch your joke go live in GitHub Actions!
-      </div>
-
-      {/* Cheerful Footer */}
+      {/* Footer */}
       <footer className="footer">
-        <p>Made with ☕, ❤️, and zero git merge conflicts.</p>
-        <span className="version-badge">Version 1.0.0</span>
+        <div className="footer-content">
+          <div className="footer-brand">Brew &amp; Bean Co.</div>
+          <p style={{ fontSize: '0.9rem' }}>Freshly roasted coffee &bull; Handcrafted daily with love</p>
+        </div>
+        <div className="footer-bottom">
+          <span>&copy; {CURRENT_YEAR} Brew &amp; Bean Coffee Roasters. All rights reserved.</span>
+          <span>Version 1.0.0</span>
+        </div>
       </footer>
     </div>
   )

@@ -75,12 +75,12 @@ graph TD
 
 ## 3. Codebase Overview (React Frontend)
 
-The application is located in the [`frontend/`](frontend/) directory. To keep students engaged and excited, the website is built as **GitHappens ☕** — a funny, lighthearted developer comedy and coffee club:
-- **🎭 Developer Joke Stage:** Interactive joke card with hidden punchlines (*"Why do programmers prefer dark mode? Because light attracts bugs!"*) that students can click to reveal and cycle.
-- **☕ Coffee-to-Code Meter:** Interactive counter tracking cups of coffee and dynamically changing developer mood from *"Zombie Mode"* to *"Talking directly to the CPU in binary"*.
-- **🗳️ "Bug or Feature?" Community Poll:** Live voting on hilarious developer dilemmas (*"The code only runs on my localhost"*).
-- **🚨 Friday Production Panic Button:** Big red button for accidental merges to `main` at 4:59 PM.
-- **🎓 Zero-Jargon Codebase:** The code in `App.jsx` is intentionally straightforward with friendly comment hints so any student can add their own joke, push to Git, and watch GitHub Actions deploy their live update!
+The application is located in the [`frontend/`](frontend/) directory. It is a realistic, commercial landing page for **Brew & Bean Co.** (an artisan specialty coffee roastery and cafe):
+- **Hero Banner:** High-resolution cafe photography, welcoming headline (*"Freshly Roasted Coffee, Crafted with Passion"*), and call-to-action buttons.
+- **Seasonal Menu Catalog:** 6 products with real photography, descriptions, prices, and an interactive **`+ Add to Order`** cart button that updates the cart counter in real-time.
+- **Brand Story Section:** Highlights ethical sourcing and small-batch roasting with authentic barista imagery.
+- **Customer Reviews & Hours:** Social proof review cards, location address, operating hours, and a newsletter subscription form.
+- **Instructor-Friendly Codebase:** In `frontend/src/App.jsx`, products and prices are defined in a clean `MENU_ITEMS` array. You can ask students to change a price or title, push to GitHub, and immediately see their changes deploy live via the CI/CD pipeline!
 
 ---
 
@@ -141,13 +141,13 @@ npm run docker:down
 
 To build real DevOps muscle memory, complete these hands-on lab exercises:
 
-### 🧪 Lab 1: Customize Your Joke & Watch GitHub Actions Deploy It!
+### 🧪 Lab 1: Update a Product Price & Watch GitHub Actions Deploy It!
 1. Open `frontend/src/App.jsx`.
-2. Find the `DEV_JOKES` array at the top of the file.
-3. Add your own funny joke or change the first joke's punchline.
+2. Find the `MENU_ITEMS` array at the top of the file.
+3. Change the price of the `"Signature Cold Brew Reserve"` from `"$5.25"` to `"$6.00"`, or customize the hero headline.
 4. Run `npm run test:run` locally to verify that unit tests pass.
-5. Commit and push: `git commit -am "feat: add my custom joke" && git push`.
-6. Open GitHub Actions in your browser: watch **Jobs 1 through 6** turn green, and open the live website to see your joke live on the internet!
+5. Commit and push: `git commit -am "feat: update seasonal cold brew price" && git push`.
+6. Open GitHub Actions in your browser: watch **Jobs 1 through 6** turn green, and refresh the live website to see the updated price live!
 
 ### 🧪 Lab 2: Practice Pull Request Branch Protection
 1. Create a feature branch: `git checkout -b feature/my-badge`.

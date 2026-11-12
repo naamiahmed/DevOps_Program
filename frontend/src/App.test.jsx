@@ -2,85 +2,54 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
 import App from './App'
 
-describe('GitHappens Application - Frontend Tests', () => {
-  it('renders the main comedy club title and subtitle', () => {
+describe('Brew & Bean Co. - Landing Page Tests', () => {
+  it('renders the brand logo and hero headline', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { level: 1, name: /GitHappens ☕/i })).toBeInTheDocument()
-    expect(screen.getByText(/Turning coffee into code, bugs, and laughs since 2026/i)).toBeInTheDocument()
+    const brandElements = screen.getAllByText('Brew & Bean Co.')
+    expect(brandElements.length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { level: 1, name: /Freshly Roasted Coffee, Crafted with Passion/i })).toBeInTheDocument()
   })
 
-  it('reveals joke punchline on button click', () => {
+  it('renders the seasonal menu items with names and prices', () => {
     render(<App />)
-    expect(screen.getByText(/Why do programmers always prefer dark mode\?/i)).toBeInTheDocument()
+    expect(screen.getByText('Ethiopian Yirgacheffe Pour-Over')).toBeInTheDocument()
+    expect(screen.getByText('$4.75')).toBeInTheDocument()
 
-    // Punchline should not be in document initially
-    expect(screen.queryByTestId('punchline-box')).not.toBeInTheDocument()
+    expect(screen.getByText('Signature Cold Brew Reserve')).toBeInTheDocument()
+    expect(screen.getByText('$5.25')).toBeInTheDocument()
 
-    // Click reveal
-    const revealBtn = screen.getByRole('button', { name: /Reveal Punchline/i })
-    fireEvent.click(revealBtn)
-
-    // Punchline should now be visible
-    expect(screen.getByTestId('punchline-box')).toHaveTextContent(/Because light attracts bugs!/i)
+    expect(screen.getByText('Caramelized Butter Croissant')).toBeInTheDocument()
+    expect(screen.getByText('$3.80')).toBeInTheDocument()
   })
 
-  it('cycles to the next joke when Skip or Next Joke is clicked', () => {
+  it('increments order count when clicking "+ Add to Order"', () => {
     render(<App />)
-    const skipBtn = screen.getByRole('button', { name: /Skip/i })
+    const cartBadge = screen.getByTestId('cart-count')
+    expect(cartBadge).toHaveTextContent('0')
 
-    // Initially Joke 1
-    expect(screen.getByText(/Why do programmers always prefer dark mode\?/i)).toBeInTheDocument()
+    const addButtons = screen.getAllByRole('button', { name: /to order/i })
+    fireEvent.click(addButtons[0])
+    expect(cartBadge).toHaveTextContent('1')
 
-    // Skip to Joke 2
-    fireEvent.click(skipBtn)
-    expect(screen.getByText(/There are only 10 types of people in the world/i)).toBeInTheDocument()
+    fireEvent.click(addButtons[1])
+    expect(cartBadge).toHaveTextContent('2')
   })
 
-  it('increments coffee counter and updates status message', () => {
+  it('renders our story and cafe location details', () => {
     render(<App />)
-    const drinkBtn = screen.getByRole('button', { name: /Drink Another Cup/i })
-
-    expect(screen.getByText(/1 Cup of Coffee Drank/i)).toBeInTheDocument()
-
-    // Drink a cup
-    fireEvent.click(drinkBtn)
-    expect(screen.getByText(/2 Cups of Coffee Drank/i)).toBeInTheDocument()
-    expect(screen.getByTestId('coffee-status')).toHaveTextContent(/In the zone!/i)
-
-    // Reset coffee
-    const resetBtn = screen.getByRole('button', { name: /Reset/i })
-    fireEvent.click(resetBtn)
-    expect(screen.getByText(/0 Cups of Coffee Drank/i)).toBeInTheDocument()
-    expect(screen.getByTestId('coffee-status')).toHaveTextContent(/Zombie Mode/i)
+    expect(screen.getByText(/Rooted in Community, Obsessed with Quality/i)).toBeInTheDocument()
+    expect(screen.getByText(/142 Artisan Boulevard, Suite 100/i)).toBeInTheDocument()
+    expect(screen.getByText(/Mon – Fri: 6:30 AM – 6:00 PM/i)).toBeInTheDocument()
   })
 
-  it('allows voting in the Bug or Feature poll', () => {
+  it('submits newsletter subscription and displays success message', () => {
     render(<App />)
-    const bugVoteBtn = screen.getByRole('button', { name: /Obviously a Bug/i })
+    const emailInput = screen.getByPlaceholderText(/Enter your email address/i)
+    const subscribeBtn = screen.getByRole('button', { name: /Subscribe/i })
 
-    expect(bugVoteBtn).toHaveTextContent('42 Votes')
+    fireEvent.change(emailInput, { target: { value: 'guest@example.com' } })
+    fireEvent.click(subscribeBtn)
 
-    fireEvent.click(bugVoteBtn)
-
-    expect(bugVoteBtn).toHaveTextContent('43 Votes')
-    expect(screen.getByText(/Thanks for voting!/i)).toBeInTheDocument()
-  })
-
-  it('triggers and dismisses the Friday panic button', () => {
-    render(<App />)
-    const panicBtn = screen.getByRole('button', { name: /Press The Panic Button/i })
-
-    expect(screen.queryByTestId('panic-banner')).not.toBeInTheDocument()
-
-    fireEvent.click(panicBtn)
-
-    expect(screen.getByTestId('panic-banner')).toBeInTheDocument()
-    expect(screen.getByText(/DON'T PANIC!/i)).toBeInTheDocument()
-
-    // Relieve panic
-    const relieveBtn = screen.getByRole('button', { name: /Relieve Panic/i })
-    fireEvent.click(relieveBtn)
-
-    expect(screen.queryByTestId('panic-banner')).not.toBeInTheDocument()
+    expect(screen.getByText(/Thank you for subscribing!/i)).toBeInTheDocument()
   })
 })

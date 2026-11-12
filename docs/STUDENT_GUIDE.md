@@ -66,7 +66,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Open your browser and navigate to `http://localhost:5173`. You will see the **GitHappens ☕** web app live!
+Open your browser and navigate to `http://localhost:5173`. You will see the **Brew & Bean Co.** coffee shop landing page live!
 
 ---
 
@@ -111,13 +111,13 @@ graph LR
 
 ## 6. Hands-On Student Labs & Exercises
 
-### 🧪 Lab 1: Add Your Own Joke & Watch GitHub Actions Deploy It
+### 🧪 Lab 1: Update a Product Price & Watch GitHub Actions Deploy It
 1. Open `frontend/src/App.jsx`.
-2. Look at the `DEV_JOKES` array at the top.
-3. Add a new joke object or customize one of the punchlines.
+2. Look at the `MENU_ITEMS` catalog array at the top.
+3. Change the price of `"Signature Cold Brew Reserve"` from `"$5.25"` to `"$6.00"`.
 4. Run `npm run test:run` locally.
-5. Commit and push your change: `git commit -am "feat: add student joke" && git push`.
-6. Watch GitHub Actions test, build, and deploy your joke live to the web!
+5. Commit and push your change: `git commit -am "feat: update coffee price" && git push`.
+6. Watch GitHub Actions test, build, and deploy your price update live to the website!
 
 ### 🧪 Lab 2: Add Your First DevOps Feature
 1. Create a new branch: `git checkout -b feature/student-profile`.
