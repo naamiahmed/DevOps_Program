@@ -66,7 +66,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Open your browser and navigate to `http://localhost:5173`. You will see the **DevOps Student Portal Dashboard**.
+Open your browser and navigate to `http://localhost:5173`. You will see the **CloudPulse Real-Time Operations Dashboard**.
 
 ---
 
@@ -113,8 +113,8 @@ graph LR
 
 ### 🧪 Lab 1: Simulate a Pipeline Failure (Red Build)
 1. Open `frontend/src/App.jsx`.
-2. Change the header title from `"DevOps Engineering Program"` to `"Broken Title"`.
-3. Run `npm test` locally. Notice how the unit test fails!
+2. Change the brand title `<h1>CloudPulse</h1>` to `<h1>Broken Title</h1>`.
+3. Run `npm run test:run` locally. Notice how the unit test fails!
 4. If you commit and push this change to GitHub, watch how **Job 2 (Automated Unit Tests)** fails in GitHub Actions.
 5. Fix the test or the component to make the pipeline pass (Green Build).
 

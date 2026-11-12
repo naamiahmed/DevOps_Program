@@ -2,7 +2,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import App from './App'
 
-describe('DevOps Engineering Program - Frontend Unit Tests', () => {
+describe('CloudPulse Application - Frontend Tests', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -11,78 +11,88 @@ describe('DevOps Engineering Program - Frontend Unit Tests', () => {
     vi.useRealTimers()
   })
 
-  it('renders the main program title and subtitle', () => {
+  it('renders the brand title, tagline, and operational status', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { level: 1, name: /DevOps Engineering Program/i })).toBeInTheDocument()
-    expect(screen.getByText(/Foundations of Continuous Integration, Delivery & Cloud Engineering/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /CloudPulse/i })).toBeInTheDocument()
+    expect(screen.getByText(/Real-Time Cloud Telemetry & Operations/i)).toBeInTheDocument()
+    expect(screen.getByTestId('global-status')).toHaveTextContent(/Operational \(99\.98%\)/i)
   })
 
-  it('renders all 6 CI/CD pipeline stages in the visualizer', () => {
+  it('renders all four microservice fleet items', () => {
     render(<App />)
-    expect(screen.getByText('Code Quality')).toBeInTheDocument()
-    expect(screen.getByText('Unit Testing')).toBeInTheDocument()
-    expect(screen.getByText('Build & Bundle')).toBeInTheDocument()
-    expect(screen.getByText('Security Audit')).toBeInTheDocument()
-    expect(screen.getByText('Containerization')).toBeInTheDocument()
-    expect(screen.getByText('Deploy / Release')).toBeInTheDocument()
+    expect(screen.getByText('Identity & Auth Service')).toBeInTheDocument()
+    expect(screen.getByText('Edge API Gateway')).toBeInTheDocument()
+    expect(screen.getByText('Transactions Engine')).toBeInTheDocument()
+    expect(screen.getByText('Vector AI Search Shard')).toBeInTheDocument()
   })
 
-  it('renders student starter terminal commands', () => {
+  it('switches cloud region and updates latency', () => {
     render(<App />)
-    expect(screen.getByText(/Student Workstation Terminal Commands/i)).toBeInTheDocument()
-    expect(screen.getByText(/Start local development server/i)).toBeInTheDocument()
-    expect(screen.getByText(/Run automated unit tests/i)).toBeInTheDocument()
+    const select = screen.getByRole('combobox')
+    expect(select).toBeInTheDocument()
+
+    // Switch to EU-Central (Frankfurt)
+    fireEvent.change(select, { target: { value: 'eu-central-1' } })
+    expect(screen.getAllByText(/EU-Central \(Frankfurt\)/i)).toHaveLength(2)
+    expect(screen.getByText('22 ms')).toBeInTheDocument()
   })
 
-  it('renders the 6 curriculum modules', () => {
+  it('simulates traffic surge and appends event to live log stream', () => {
     render(<App />)
-    expect(screen.getByText('Version Control & Git Governance')).toBeInTheDocument()
-    expect(screen.getByText('Automated CI/CD Pipelines')).toBeInTheDocument()
-    expect(screen.getByText('Docker & Containerization')).toBeInTheDocument()
-    expect(screen.getByText('Kubernetes Orchestration')).toBeInTheDocument()
-  })
+    const surgeBtn = screen.getByRole('button', { name: /Simulate Traffic Surge/i })
+    expect(surgeBtn).toBeInTheDocument()
 
-  it('triggers pipeline simulation and completes all stages', async () => {
-    render(<App />)
+    fireEvent.click(surgeBtn)
 
-    const simulateBtn = screen.getByRole('button', { name: /Simulate CI\/CD Run/i })
-    expect(simulateBtn).toBeInTheDocument()
+    // Button should enter simulating state
+    expect(screen.getByRole('button', { name: /Simulating Surge/i })).toBeDisabled()
 
-    // Click simulate
+    // Log entry should appear
+    expect(screen.getByText(/Traffic Surge Simulation/i)).toBeInTheDocument()
+
+    // Fast-forward timers to settle back to nominal
     act(() => {
-      fireEvent.click(simulateBtn)
+      vi.advanceTimersByTime(4000)
     })
 
-    // Advance all timers through all stages
-    await act(async () => {
-      await vi.runAllTimersAsync()
-    })
-
-    // Button should be re-enabled
-    expect(screen.getByRole('button', { name: /Simulate CI\/CD Run/i })).not.toBeDisabled()
-    expect(screen.getAllByText(/Passed ✓/i)).toHaveLength(6)
+    expect(screen.getByRole('button', { name: /Simulate Traffic Surge/i })).not.toBeDisabled()
   })
 
-  it('resets the pipeline when reset button is clicked', async () => {
+  it('triggers rolling deploy and logs release artifact', () => {
     render(<App />)
+    const deployBtn = screen.getByRole('button', { name: /Trigger Rolling Deploy/i })
 
-    const simulateBtn = screen.getByRole('button', { name: /Simulate CI\/CD Run/i })
-    const resetBtn = screen.getByRole('button', { name: /Reset/i })
+    fireEvent.click(deployBtn)
 
+    expect(screen.getByText(/Live Patch Deployed/i)).toBeInTheDocument()
+    expect(screen.getByText(/zero-downtime rolling update/i)).toBeInTheDocument()
+  })
+
+  it('filters live event logs by type', () => {
+    render(<App />)
+    const deployFilterBtn = screen.getByRole('button', { name: /^Deploys$/i })
+
+    fireEvent.click(deployFilterBtn)
+
+    // Deploys should remain visible
+    expect(screen.getByText(/Continuous Deployment/i)).toBeInTheDocument()
+  })
+
+  it('restarts a microservice and restores healthy status', () => {
+    render(<App />)
+    const restartBtns = screen.getAllByRole('button', { name: /Restart/i })
+
+    fireEvent.click(restartBtns[0])
+
+    // Should indicate recycling
+    expect(screen.getByText(/Recycling\.\.\./i)).toBeInTheDocument()
+
+    // Advance timer by 2 seconds
     act(() => {
-      fireEvent.click(simulateBtn)
+      vi.advanceTimersByTime(2000)
     })
 
-    await act(async () => {
-      await vi.runAllTimersAsync()
-    })
-
-    expect(screen.getAllByText(/Passed ✓/i)).toHaveLength(6)
-
-    act(() => {
-      fireEvent.click(resetBtn)
-    })
-
-    expect(screen.getAllByText(/Pending/i)).toHaveLength(6)
+    expect(screen.queryByText(/Recycling\.\.\./i)).not.toBeInTheDocument()
+    expect(screen.getByText(/Container Restarted/i)).toBeInTheDocument()
   })
 })

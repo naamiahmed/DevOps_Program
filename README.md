@@ -75,11 +75,13 @@ graph TD
 
 ## 3. Codebase Overview (React Frontend)
 
-The application is located in the [`frontend/`](frontend/) directory. It is an interactive **DevOps Student Dashboard** featuring:
-- **Pipeline Simulator:** An interactive widget where students can click and see the 6 stages transition through *Pending*, *Running*, and *Passed* with timers.
-- **Curriculum Cards:** Previews of upcoming course modules (Git, CI/CD, Docker, Kubernetes, Terraform, Observability).
-- **Workstation Command Bar:** Quick reference for common terminal commands.
-- **Unit Test Coverage:** Automated test suite in `frontend/src/App.test.jsx`.
+The application is located in the [`frontend/`](frontend/) directory. It is an engaging, real-world cloud operations platform called **CloudPulse**:
+- **Real-Time Telemetry Gauges:** Live throughput, P99 edge latency, error rates, and cluster compute utilization.
+- **Global Region Routing:** Live region switching (US-East, EU-Central, AP-South, AP-East) that updates latency metrics.
+- **Microservices Fleet Manager:** Status monitoring and live pod restarts for Auth, Edge Gateway, Payments, and Vector AI Search services.
+- **Live Event Stream:** Filterable real-time activity stream showing automated deployments, autoscaling spikes, and health probes.
+- **Interactive Actions:** Students can simulate traffic surges and trigger rolling deployment patches directly from the UI.
+- **Automated Unit Test Coverage:** Comprehensive test suite in `frontend/src/App.test.jsx`.
 
 ---
 
@@ -142,8 +144,8 @@ To build real DevOps muscle memory, complete these hands-on lab exercises:
 
 ### 🧪 Lab 1: Break the Test & Observe Pipeline Failure (Red Build)
 1. Open `frontend/src/App.jsx`.
-2. Change the header text from `"DevOps Engineering Program"` to `"My App"`.
-3. Run `npm run test:run`. Notice that the unit test fails because it expects `"DevOps Engineering Program"`.
+2. Change the brand title `<h1>CloudPulse</h1>` to `<h1>Broken App</h1>`.
+3. Run `npm run test:run`. Notice that the unit test fails because it expects `"CloudPulse"`.
 4. Commit and push this change to a test branch. Observe how **Job 2 (Automated Unit Tests)** in GitHub Actions turns red and blocks the deployment!
 5. Restore the text or update the test to make the pipeline green again.
 
