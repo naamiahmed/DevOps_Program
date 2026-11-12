@@ -1,0 +1,27 @@
+# ==============================================================================
+# DevOps Engineering Training Program - Docker Compose
+# Local container orchestration for students
+# ==============================================================================
+# Usage:
+#   docker compose up --build       -> Build and run in foreground
+#   docker compose up -d            -> Run in background (detached)
+#   docker compose down             -> Stop and clean up containers
+# ==============================================================================
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: devops-frontend-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

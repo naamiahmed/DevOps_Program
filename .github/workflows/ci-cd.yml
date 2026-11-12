@@ -1,0 +1,295 @@
+name: DevOps CI/CD Pipeline (Student Edition)
+
+# ==============================================================================
+# DevOps Engineering Training Program - Master CI/CD Workflow
+# ==============================================================================
+# Educational Overview:
+# This workflow demonstrates the fundamental Continuous Integration and
+# Continuous Delivery (CI/CD) lifecycle.
+#
+# Pipeline Structure:
+# ┌─────────────────────────────────────────────────────────────┐
+# │                   Stage 1: Code Quality                     │
+# │                     (Linter / Oxlint)                       │
+# └──────────────────────────────┬──────────────────────────────┘
+#                                │ (passes)
+#                                ▼
+# ┌─────────────────────────────────────────────────────────────┐
+# │                   Stage 2: Automated Tests                  │
+# │                    (Vitest Unit Testing)                    │
+# └──────────────────────────────┬──────────────────────────────┘
+#                                │ (passes)
+#                ┌───────────────┴───────────────┐
+#                ▼                               ▼
+# ┌─────────────────────────────┐ ┌─────────────────────────────┐
+# │  Stage 3: Build & Package   │ │   Stage 4: Security Audit   │
+# │     (Vite dist/ bundle)     │ │        (npm audit)          │
+# └──────────────┬──────────────┘ └──────────────┬──────────────┘
+#                │                               │
+#                ▼                               │
+# ┌─────────────────────────────┐                │
+# │ Stage 5: Container Validation│               │
+# │     (Docker Build Check)    │                │
+# └──────────────┬──────────────┘                │
+#                └───────────────┬───────────────┘
+#                                │ (all passed)
+#                                ▼
+# ┌─────────────────────────────────────────────────────────────┐
+# │                 Stage 6: Deploy to Hosting                  │
+# │                 (GitHub Pages / Staging Env)                │
+# └─────────────────────────────────────────────────────────────┘
+# ==============================================================================
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    # Allows students to manually trigger this pipeline from the GitHub Actions web UI
+
+# Permissions required for deploying to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent concurrent deployments from colliding
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================================
+  # JOB 1: CODE QUALITY & STATIC ANALYSIS
+  # ============================================================================
+  # Purpose:
+  #   Inspects code syntax, style conventions, and common bugs BEFORE running tests
+  #   or compiling. This is the fastest feedback loop for developers.
+  # If this job fails:
+  #   The pipeline immediately stops. No compute time is wasted on building broken code.
+  # ============================================================================
+  code-quality:
+    name: "1. Code Quality & Lint"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          # Fetch full depth or current commit
+          fetch-depth: 1
+
+      - name: ⚙️ Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install Clean Dependencies (npm ci)
+        # 'npm ci' installs exact dependency versions from package-lock.json
+        run: npm ci
+
+      - name: 🔍 Run Static Linter (Oxlint)
+        # Verifies code standards, unused variables, and JSX correctness
+        run: npm run lint
+
+  # ============================================================================
+  # JOB 2: AUTOMATED UNIT TESTS
+  # ============================================================================
+  # Purpose:
+  #   Runs the automated test suite (Vitest + React Testing Library).
+  #   Guarantees that new code changes did not break existing features.
+  # DevOps Principle:
+  #   "Automated Quality Gate" - Code cannot be promoted if tests fail.
+  # ============================================================================
+  unit-tests:
+    name: "2. Automated Unit Tests"
+    needs: code-quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🧪 Execute Unit Test Suite
+        # Runs vitest once in headless CI mode
+        run: npm run test:run
+
+  # ============================================================================
+  # JOB 3: BUILD & ARTIFACT PACKAGING
+  # ============================================================================
+  # Purpose:
+  #   Compiles and minifies the React application into static production assets.
+  #   Uploads the resulting `dist/` directory as an artifact for deployment.
+  # DevOps Principle:
+  #   "Build Once, Deploy Anywhere" - The artifact built here is the EXACT artifact
+  #   promoted through subsequent environments.
+  # ============================================================================
+  build-and-package:
+    name: "3. Build & Package Artifact"
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🏗️ Compile Production Bundle (Vite Build)
+        # Bundles HTML, CSS, JavaScript into dist/
+        run: npm run build
+
+      - name: 📤 Upload Build Artifact
+        # Persists the build folder so downstream deployment jobs can use it
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  # ============================================================================
+  # JOB 4: DEVSECOPS & DEPENDENCY SECURITY AUDIT
+  # ============================================================================
+  # Purpose:
+  #   Scans all third-party libraries against the National Vulnerability Database.
+  # DevOps Principle:
+  #   "Shift Security Left" - Detect security flaws during early build phases.
+  # ============================================================================
+  security-audit:
+    name: "4. DevSecOps Security Audit"
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 🛡️ Audit Dependencies for CVEs
+        # Warns or fails if critical vulnerabilities are discovered
+        run: npm audit --audit-level=high
+
+  # ============================================================================
+  # JOB 5: DOCKER CONTAINER VERIFICATION
+  # ============================================================================
+  # Purpose:
+  #   Verifies that the multi-stage Dockerfile builds successfully and the
+  #   Nginx web server is capable of starting up without errors.
+  # DevOps Principle:
+  #   "Immutable Infrastructure" - Containers package code + runtime + web server
+  #   together into a standardized deployable unit.
+  # ============================================================================
+  docker-verification:
+    name: "5. Docker Container Build Check"
+    needs: build-and-package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔨 Build Docker Image
+        # Tests the Docker multi-stage build without pushing to a registry
+        run: |
+          docker build \
+            --tag devops-frontend:test \
+            --file frontend/Dockerfile \
+            frontend/
+
+      - name: 🩺 Smoke Test Container Startup
+        # Starts the container briefly and checks the /healthz probe
+        run: |
+          docker run -d --name test-container -p 8080:80 devops-frontend:test
+          sleep 3
+          curl --fail http://localhost:8080/healthz || exit 1
+          docker stop test-container
+          docker rm test-container
+
+  # ============================================================================
+  # JOB 6: DEPLOY TO STAGING / GITHUB PAGES
+  # ============================================================================
+  # Purpose:
+  #   Takes the verified build artifact from Job 3 and deploys it live.
+  #   Runs ONLY when code is merged into the 'main' branch (not on Pull Requests).
+  # DevOps Principle:
+  #   "Continuous Deployment (CD)" - Every passing commit to main is automatically
+  #   released to the live environment.
+  # ============================================================================
+  deploy-staging:
+    name: "6. Deploy to Staging / Hosting"
+    needs: [build-and-package, security-audit, docker-verification]
+    # Only deploy on direct push to main, not on pull requests
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 📥 Download Production Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./dist
+
+      - name: 🌐 Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: 📦 Upload Artifact for Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+      - name: 🚀 Publish Deployment
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: ✅ Report Deployment Success
+        run: |
+          echo "=========================================================="
+          echo "🎉 DEPLOYMENT SUCCESSFUL!"
+          echo "Your DevOps Portal is now live and serving traffic."
+          echo "URL: ${{ steps.deployment.outputs.page_url }}"
+          echo "=========================================================="

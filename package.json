@@ -1,0 +1,26 @@
+{
+  "name": "devops-program",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DevOps Engineering Training Program - Foundations of CI/CD, Containerization, and Cloud Native Engineering",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "test": "npm --prefix frontend run test",
+    "test:run": "npm --prefix frontend run test:run",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [
+    "devops",
+    "ci-cd",
+    "github-actions",
+    "docker",
+    "react",
+    "education"
+  ],
+  "author": "DevOps Engineering Program",
+  "license": "MIT"
+}
