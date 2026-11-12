@@ -250,34 +250,22 @@ jobs:
           echo "📁 Creating remote application directory on $EC2_HOST..."
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST "mkdir -p ~/app/frontend"
 
-          echo "🚀 Copying compiled production bundle and Nginx configs to EC2..."
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem -r frontend/dist frontend/nginx.conf $EC2_USER@$EC2_HOST:~/app/frontend/
+          echo "🚀 Copying compiled production bundle, Nginx configs, and Dockerfile to EC2..."
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem -r frontend/dist frontend/nginx.conf frontend/Dockerfile.deploy $EC2_USER@$EC2_HOST:~/app/frontend/
 
       - name: 🐳 Build, Push to AWS ECR & Launch Container on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST bash << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST << 'EOF'
             set -e
             cd ~/app/frontend
 
             echo "🔑 Authenticating with AWS ECR (Region: ap-southeast-2)..."
             aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 322473970206.dkr.ecr.ap-southeast-2.amazonaws.com
 
-            echo "🔨 Generating production container descriptor..."
-            cat << 'DOCKERFILE' > Dockerfile.deploy
-            FROM nginx:1.27-alpine
-            RUN rm -rf /usr/share/nginx/html/*
-            COPY dist /usr/share/nginx/html
-            COPY nginx.conf /etc/nginx/conf.d/default.conf
-            EXPOSE 80
-            HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-              CMD wget --quiet --tries=1 --spider http://localhost/healthz || exit 1
-            CMD ["nginx", "-g", "daemon off;"]
-            DOCKERFILE
-
             IMAGE_URI="322473970206.dkr.ecr.ap-southeast-2.amazonaws.com/devops_program_cc_fe:latest"
 
             echo "🐳 Building Docker image for production release..."
-            docker build -t "$IMAGE_URI" -f Dockerfile.deploy .
+            docker build --no-cache -t "$IMAGE_URI" -f Dockerfile.deploy .
 
             echo "⬆️ Pushing Docker image to AWS ECR repository..."
             docker push "$IMAGE_URI"
