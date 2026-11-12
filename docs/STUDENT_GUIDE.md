@@ -66,7 +66,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Open your browser and navigate to `http://localhost:5173`. You will see the **CloudPulse Real-Time Operations Dashboard**.
+Open your browser and navigate to `http://localhost:5173`. You will see the **GitHappens ☕** web app live!
 
 ---
 
@@ -111,12 +111,13 @@ graph LR
 
 ## 6. Hands-On Student Labs & Exercises
 
-### 🧪 Lab 1: Simulate a Pipeline Failure (Red Build)
+### 🧪 Lab 1: Add Your Own Joke & Watch GitHub Actions Deploy It
 1. Open `frontend/src/App.jsx`.
-2. Change the brand title `<h1>CloudPulse</h1>` to `<h1>Broken Title</h1>`.
-3. Run `npm run test:run` locally. Notice how the unit test fails!
-4. If you commit and push this change to GitHub, watch how **Job 2 (Automated Unit Tests)** fails in GitHub Actions.
-5. Fix the test or the component to make the pipeline pass (Green Build).
+2. Look at the `DEV_JOKES` array at the top.
+3. Add a new joke object or customize one of the punchlines.
+4. Run `npm run test:run` locally.
+5. Commit and push your change: `git commit -am "feat: add student joke" && git push`.
+6. Watch GitHub Actions test, build, and deploy your joke live to the web!
 
 ### 🧪 Lab 2: Add Your First DevOps Feature
 1. Create a new branch: `git checkout -b feature/student-profile`.

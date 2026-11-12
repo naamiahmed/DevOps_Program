@@ -1,98 +1,86 @@
-import { render, screen, fireEvent, act } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
 import App from './App'
 
-describe('CloudPulse Application - Frontend Tests', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('renders the brand title, tagline, and operational status', () => {
+describe('GitHappens Application - Frontend Tests', () => {
+  it('renders the main comedy club title and subtitle', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { level: 1, name: /CloudPulse/i })).toBeInTheDocument()
-    expect(screen.getByText(/Real-Time Cloud Telemetry & Operations/i)).toBeInTheDocument()
-    expect(screen.getByTestId('global-status')).toHaveTextContent(/Operational \(99\.98%\)/i)
+    expect(screen.getByRole('heading', { level: 1, name: /GitHappens ☕/i })).toBeInTheDocument()
+    expect(screen.getByText(/Turning coffee into code, bugs, and laughs since 2026/i)).toBeInTheDocument()
   })
 
-  it('renders all four microservice fleet items', () => {
+  it('reveals joke punchline on button click', () => {
     render(<App />)
-    expect(screen.getByText('Identity & Auth Service')).toBeInTheDocument()
-    expect(screen.getByText('Edge API Gateway')).toBeInTheDocument()
-    expect(screen.getByText('Transactions Engine')).toBeInTheDocument()
-    expect(screen.getByText('Vector AI Search Shard')).toBeInTheDocument()
+    expect(screen.getByText(/Why do programmers always prefer dark mode\?/i)).toBeInTheDocument()
+
+    // Punchline should not be in document initially
+    expect(screen.queryByTestId('punchline-box')).not.toBeInTheDocument()
+
+    // Click reveal
+    const revealBtn = screen.getByRole('button', { name: /Reveal Punchline/i })
+    fireEvent.click(revealBtn)
+
+    // Punchline should now be visible
+    expect(screen.getByTestId('punchline-box')).toHaveTextContent(/Because light attracts bugs!/i)
   })
 
-  it('switches cloud region and updates latency', () => {
+  it('cycles to the next joke when Skip or Next Joke is clicked', () => {
     render(<App />)
-    const select = screen.getByRole('combobox')
-    expect(select).toBeInTheDocument()
+    const skipBtn = screen.getByRole('button', { name: /Skip/i })
 
-    // Switch to EU-Central (Frankfurt)
-    fireEvent.change(select, { target: { value: 'eu-central-1' } })
-    expect(screen.getAllByText(/EU-Central \(Frankfurt\)/i)).toHaveLength(2)
-    expect(screen.getByText('22 ms')).toBeInTheDocument()
+    // Initially Joke 1
+    expect(screen.getByText(/Why do programmers always prefer dark mode\?/i)).toBeInTheDocument()
+
+    // Skip to Joke 2
+    fireEvent.click(skipBtn)
+    expect(screen.getByText(/There are only 10 types of people in the world/i)).toBeInTheDocument()
   })
 
-  it('simulates traffic surge and appends event to live log stream', () => {
+  it('increments coffee counter and updates status message', () => {
     render(<App />)
-    const surgeBtn = screen.getByRole('button', { name: /Simulate Traffic Surge/i })
-    expect(surgeBtn).toBeInTheDocument()
+    const drinkBtn = screen.getByRole('button', { name: /Drink Another Cup/i })
 
-    fireEvent.click(surgeBtn)
+    expect(screen.getByText(/1 Cup of Coffee Drank/i)).toBeInTheDocument()
 
-    // Button should enter simulating state
-    expect(screen.getByRole('button', { name: /Simulating Surge/i })).toBeDisabled()
+    // Drink a cup
+    fireEvent.click(drinkBtn)
+    expect(screen.getByText(/2 Cups of Coffee Drank/i)).toBeInTheDocument()
+    expect(screen.getByTestId('coffee-status')).toHaveTextContent(/In the zone!/i)
 
-    // Log entry should appear
-    expect(screen.getByText(/Traffic Surge Simulation/i)).toBeInTheDocument()
-
-    // Fast-forward timers to settle back to nominal
-    act(() => {
-      vi.advanceTimersByTime(4000)
-    })
-
-    expect(screen.getByRole('button', { name: /Simulate Traffic Surge/i })).not.toBeDisabled()
+    // Reset coffee
+    const resetBtn = screen.getByRole('button', { name: /Reset/i })
+    fireEvent.click(resetBtn)
+    expect(screen.getByText(/0 Cups of Coffee Drank/i)).toBeInTheDocument()
+    expect(screen.getByTestId('coffee-status')).toHaveTextContent(/Zombie Mode/i)
   })
 
-  it('triggers rolling deploy and logs release artifact', () => {
+  it('allows voting in the Bug or Feature poll', () => {
     render(<App />)
-    const deployBtn = screen.getByRole('button', { name: /Trigger Rolling Deploy/i })
+    const bugVoteBtn = screen.getByRole('button', { name: /Obviously a Bug/i })
 
-    fireEvent.click(deployBtn)
+    expect(bugVoteBtn).toHaveTextContent('42 Votes')
 
-    expect(screen.getByText(/Live Patch Deployed/i)).toBeInTheDocument()
-    expect(screen.getByText(/zero-downtime rolling update/i)).toBeInTheDocument()
+    fireEvent.click(bugVoteBtn)
+
+    expect(bugVoteBtn).toHaveTextContent('43 Votes')
+    expect(screen.getByText(/Thanks for voting!/i)).toBeInTheDocument()
   })
 
-  it('filters live event logs by type', () => {
+  it('triggers and dismisses the Friday panic button', () => {
     render(<App />)
-    const deployFilterBtn = screen.getByRole('button', { name: /^Deploys$/i })
+    const panicBtn = screen.getByRole('button', { name: /Press The Panic Button/i })
 
-    fireEvent.click(deployFilterBtn)
+    expect(screen.queryByTestId('panic-banner')).not.toBeInTheDocument()
 
-    // Deploys should remain visible
-    expect(screen.getByText(/Continuous Deployment/i)).toBeInTheDocument()
-  })
+    fireEvent.click(panicBtn)
 
-  it('restarts a microservice and restores healthy status', () => {
-    render(<App />)
-    const restartBtns = screen.getAllByRole('button', { name: /Restart/i })
+    expect(screen.getByTestId('panic-banner')).toBeInTheDocument()
+    expect(screen.getByText(/DON'T PANIC!/i)).toBeInTheDocument()
 
-    fireEvent.click(restartBtns[0])
+    // Relieve panic
+    const relieveBtn = screen.getByRole('button', { name: /Relieve Panic/i })
+    fireEvent.click(relieveBtn)
 
-    // Should indicate recycling
-    expect(screen.getByText(/Recycling\.\.\./i)).toBeInTheDocument()
-
-    // Advance timer by 2 seconds
-    act(() => {
-      vi.advanceTimersByTime(2000)
-    })
-
-    expect(screen.queryByText(/Recycling\.\.\./i)).not.toBeInTheDocument()
-    expect(screen.getByText(/Container Restarted/i)).toBeInTheDocument()
+    expect(screen.queryByTestId('panic-banner')).not.toBeInTheDocument()
   })
 })

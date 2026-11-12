@@ -75,13 +75,12 @@ graph TD
 
 ## 3. Codebase Overview (React Frontend)
 
-The application is located in the [`frontend/`](frontend/) directory. It is an engaging, real-world cloud operations platform called **CloudPulse**:
-- **Real-Time Telemetry Gauges:** Live throughput, P99 edge latency, error rates, and cluster compute utilization.
-- **Global Region Routing:** Live region switching (US-East, EU-Central, AP-South, AP-East) that updates latency metrics.
-- **Microservices Fleet Manager:** Status monitoring and live pod restarts for Auth, Edge Gateway, Payments, and Vector AI Search services.
-- **Live Event Stream:** Filterable real-time activity stream showing automated deployments, autoscaling spikes, and health probes.
-- **Interactive Actions:** Students can simulate traffic surges and trigger rolling deployment patches directly from the UI.
-- **Automated Unit Test Coverage:** Comprehensive test suite in `frontend/src/App.test.jsx`.
+The application is located in the [`frontend/`](frontend/) directory. To keep students engaged and excited, the website is built as **GitHappens ☕** — a funny, lighthearted developer comedy and coffee club:
+- **🎭 Developer Joke Stage:** Interactive joke card with hidden punchlines (*"Why do programmers prefer dark mode? Because light attracts bugs!"*) that students can click to reveal and cycle.
+- **☕ Coffee-to-Code Meter:** Interactive counter tracking cups of coffee and dynamically changing developer mood from *"Zombie Mode"* to *"Talking directly to the CPU in binary"*.
+- **🗳️ "Bug or Feature?" Community Poll:** Live voting on hilarious developer dilemmas (*"The code only runs on my localhost"*).
+- **🚨 Friday Production Panic Button:** Big red button for accidental merges to `main` at 4:59 PM.
+- **🎓 Zero-Jargon Codebase:** The code in `App.jsx` is intentionally straightforward with friendly comment hints so any student can add their own joke, push to Git, and watch GitHub Actions deploy their live update!
 
 ---
 
@@ -142,12 +141,13 @@ npm run docker:down
 
 To build real DevOps muscle memory, complete these hands-on lab exercises:
 
-### 🧪 Lab 1: Break the Test & Observe Pipeline Failure (Red Build)
+### 🧪 Lab 1: Customize Your Joke & Watch GitHub Actions Deploy It!
 1. Open `frontend/src/App.jsx`.
-2. Change the brand title `<h1>CloudPulse</h1>` to `<h1>Broken App</h1>`.
-3. Run `npm run test:run`. Notice that the unit test fails because it expects `"CloudPulse"`.
-4. Commit and push this change to a test branch. Observe how **Job 2 (Automated Unit Tests)** in GitHub Actions turns red and blocks the deployment!
-5. Restore the text or update the test to make the pipeline green again.
+2. Find the `DEV_JOKES` array at the top of the file.
+3. Add your own funny joke or change the first joke's punchline.
+4. Run `npm run test:run` locally to verify that unit tests pass.
+5. Commit and push: `git commit -am "feat: add my custom joke" && git push`.
+6. Open GitHub Actions in your browser: watch **Jobs 1 through 6** turn green, and open the live website to see your joke live on the internet!
 
 ### 🧪 Lab 2: Practice Pull Request Branch Protection
 1. Create a feature branch: `git checkout -b feature/my-badge`.

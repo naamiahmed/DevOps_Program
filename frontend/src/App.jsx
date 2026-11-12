@@ -1,320 +1,263 @@
 import { useState } from 'react'
 import './App.css'
 
-const INITIAL_SERVICES = [
-  { id: 'auth', name: 'Identity & Auth Service', version: 'v2.4.1', pods: '4/4', latency: '12ms', status: 'healthy' },
-  { id: 'gateway', name: 'Edge API Gateway', version: 'v3.1.0', pods: '12/12', latency: '8ms', status: 'healthy' },
-  { id: 'payments', name: 'Transactions Engine', version: 'v1.9.4', pods: '6/6', latency: '24ms', status: 'healthy' },
-  { id: 'vector', name: 'Vector AI Search Shard', version: 'v0.8.2', pods: '3/3', latency: '19ms', status: 'healthy' },
+// =============================================================================
+// 💡 STUDENTS LAB TASK 1: ADD OR CHANGE A JOKE HERE!
+// Change any setup or punchline, save, and watch your changes deploy!
+// =============================================================================
+const DEV_JOKES = [
+  {
+    id: 1,
+    setup: 'Why do programmers always prefer dark mode?',
+    punchline: 'Because light attracts bugs! 🪲'
+  },
+  {
+    id: 2,
+    setup: 'There are only 10 types of people in the world...',
+    punchline: 'Those who understand binary, and those who don\'t! 🤖'
+  },
+  {
+    id: 3,
+    setup: 'Why was the JavaScript developer sad?',
+    punchline: 'Because they didn\'t Node how to Express themselves! 📦'
+  },
+  {
+    id: 4,
+    setup: 'A SQL query walks into a bar, walks up to two tables and asks...',
+    punchline: '"Can I JOIN you?" 🍻'
+  },
+  {
+    id: 5,
+    setup: 'How many programmers does it take to change a lightbulb?',
+    punchline: 'None. That\'s a hardware problem! 💡'
+  }
 ]
 
-const INITIAL_LOGS = [
-  { id: 1, type: 'deploy', time: '11:14:02', title: 'Continuous Deployment', message: 'Release artifact v2.4.1 successfully activated across all clusters.' },
-  { id: 2, type: 'traffic', time: '11:12:45', title: 'Autoscaler Triggered', message: 'Traffic ramp detected in eu-central-1. Scaled gateway pods 8 -> 12.' },
-  { id: 3, type: 'alert', time: '11:10:18', title: 'TLS Certificate Renewal', message: 'Automated certificate renewal completed for *.cloudpulse.io (Let\'s Encrypt).' },
-  { id: 4, type: 'deploy', time: '11:08:30', title: 'Health Probe Verified', message: 'Global HTTP /healthz probe passed with 100% availability across 16 edges.' }
-]
-
-const REGIONS = [
-  { id: 'us-east-1', name: 'US-East (N. Virginia)', baseLatency: 14, nodes: 48 },
-  { id: 'eu-central-1', name: 'EU-Central (Frankfurt)', baseLatency: 22, nodes: 32 },
-  { id: 'ap-south-1', name: 'AP-South (Mumbai)', baseLatency: 38, nodes: 24 },
-  { id: 'ap-northeast-1', name: 'AP-East (Tokyo)', baseLatency: 29, nodes: 28 },
+// =============================================================================
+// 💡 STUDENTS LAB TASK 2: CUSTOMIZE THE COFFEE STATUS MESSAGES!
+// =============================================================================
+const COFFEE_MESSAGES = [
+  '😴 Zombie Mode: Cannot process Git commands. Need coffee immediately!',
+  '☕ Cup 1: Compiling... Hello World is looking good.',
+  '⚡ Cup 2: In the zone! Writing 50 lines of untested code with supreme confidence.',
+  '🚀 Cup 3: Terminal wizard! Committing straight to main!',
+  '🔥 Cup 4+: Ascended being! Talking directly to the CPU in binary!'
 ]
 
 export default function App() {
-  const [selectedRegion, setSelectedRegion] = useState(REGIONS[0])
-  const [requestsPerSec, setRequestsPerSec] = useState(28420)
-  const [services, setServices] = useState(INITIAL_SERVICES)
-  const [logs, setLogs] = useState(INITIAL_LOGS)
-  const [logFilter, setLogFilter] = useState('all')
-  const [cpuLoad, setCpuLoad] = useState(44)
-  const [isSpiking, setIsSpiking] = useState(false)
+  // Current Joke State
+  const [currentJokeIndex, setCurrentJokeIndex] = useState(0)
+  const [showPunchline, setShowPunchline] = useState(false)
 
-  // Simulate a live traffic burst
-  const handleSimulateTrafficBurst = () => {
-    setIsSpiking(true)
-    const burstAddition = Math.floor(Math.random() * 8000) + 5000
-    setRequestsPerSec(prev => prev + burstAddition)
-    setCpuLoad(prev => Math.min(94, prev + 28))
+  // Coffee Meter State
+  const [coffeeCount, setCoffeeCount] = useState(1)
 
-    const newLog = {
-      id: Date.now(),
-      type: 'traffic',
-      time: new Date().toLocaleTimeString(),
-      title: 'Traffic Surge Simulation',
-      message: `Simulated surge detected: +${burstAddition.toLocaleString()} req/s. Edge CDN load balanced smoothly.`
+  // Bug or Feature Poll State
+  const [bugVotes, setBugVotes] = useState(42)
+  const [featureVotes, setFeatureVotes] = useState(128)
+  const [userVoted, setUserVoted] = useState(null)
+
+  // Panic Button State
+  const [isPanicking, setIsPanicking] = useState(false)
+
+  const currentJoke = DEV_JOKES[currentJokeIndex]
+
+  const handleNextJoke = () => {
+    setShowPunchline(false)
+    setCurrentJokeIndex((prev) => (prev + 1) % DEV_JOKES.length)
+  }
+
+  const handleDrinkCoffee = () => {
+    setCoffeeCount((prev) => prev + 1)
+  }
+
+  const handleResetCoffee = () => {
+    setCoffeeCount(0)
+  }
+
+  const handleVote = (choice) => {
+    if (userVoted) return
+    setUserVoted(choice)
+    if (choice === 'bug') {
+      setBugVotes((prev) => prev + 1)
+    } else {
+      setFeatureVotes((prev) => prev + 1)
     }
-    setLogs(prev => [newLog, ...prev])
-
-    setTimeout(() => {
-      setIsSpiking(false)
-      setRequestsPerSec(28420 + Math.floor(Math.random() * 800))
-      setCpuLoad(46)
-    }, 3500)
   }
 
-  // Simulate deploying a live patch
-  const handleDeployPatch = () => {
-    const patchVersion = `v2.4.${Math.floor(Math.random() * 9) + 2}`
-    setServices(prev =>
-      prev.map(s => s.id === 'gateway' ? { ...s, version: patchVersion } : s)
-    )
-
-    const deployLog = {
-      id: Date.now(),
-      type: 'deploy',
-      time: new Date().toLocaleTimeString(),
-      title: 'Live Patch Deployed',
-      message: `Edge API Gateway successfully patched to ${patchVersion} via zero-downtime rolling update.`
-    }
-    setLogs(prev => [deployLog, ...prev])
+  const getCoffeeStatus = () => {
+    if (coffeeCount === 0) return COFFEE_MESSAGES[0]
+    if (coffeeCount === 1) return COFFEE_MESSAGES[1]
+    if (coffeeCount === 2) return COFFEE_MESSAGES[2]
+    if (coffeeCount === 3) return COFFEE_MESSAGES[3]
+    return COFFEE_MESSAGES[4]
   }
-
-  // Toggle a service restart
-  const handleRestartService = (serviceId) => {
-    setServices(prev =>
-      prev.map(s => (s.id === serviceId ? { ...s, status: 'restarting' } : s))
-    )
-
-    setTimeout(() => {
-      setServices(prev =>
-        prev.map(s => (s.id === serviceId ? { ...s, status: 'healthy' } : s))
-      )
-      const restartLog = {
-        id: Date.now(),
-        type: 'alert',
-        time: new Date().toLocaleTimeString(),
-        title: 'Container Restarted',
-        message: `Service [${serviceId}] gracefully recycled. Fresh pod instance booted in 1.2s.`
-      }
-      setLogs(prev => [restartLog, ...prev])
-    }, 1500)
-  }
-
-  const filteredLogs = logFilter === 'all'
-    ? logs
-    : logs.filter(l => l.type === logFilter)
 
   return (
-    <div className="dashboard-container">
-      {/* Top Navbar */}
-      <header className="navbar">
-        <div className="brand">
-          <div className="brand-icon" aria-label="CloudPulse Logo">⚡</div>
-          <div className="brand-info">
-            <h1>CloudPulse</h1>
-            <p className="brand-tagline">Real-Time Cloud Telemetry &amp; Operations</p>
-          </div>
+    <div className="app-wrapper">
+      {/* Friendly Header */}
+      <header className="top-header">
+        <div className="brand-badge">
+          <span>🚀 Deploying on Friday</span>
+          <span>&bull;</span>
+          <span>What could possibly go wrong?</span>
         </div>
-
-        <div className="nav-controls">
-          <label htmlFor="region-selector" style={{ display: 'none' }}>Select Region</label>
-          <select
-            id="region-selector"
-            className="region-select"
-            value={selectedRegion.id}
-            onChange={(e) => {
-              const reg = REGIONS.find(r => r.id === e.target.value)
-              if (reg) setSelectedRegion(reg)
-            }}
-          >
-            {REGIONS.map(r => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
-
-          <div className="status-indicator" data-testid="global-status">
-            <span className="pulse-dot"></span>
-            Operational (99.98%)
-          </div>
-        </div>
+        <h1 className="main-title">GitHappens ☕</h1>
+        <p className="main-subtitle">Turning coffee into code, bugs, and laughs since 2026</p>
       </header>
 
-      {/* Control Strip & Quick Actions */}
-      <section className="control-strip">
-        <div className="control-title">
-          <h2>Telemetry Command Hub</h2>
-          <p>Active Cluster: <strong>{selectedRegion.name}</strong> &bull; {selectedRegion.nodes} Connected Edge Nodes</p>
-        </div>
-        <div className="actions-group">
-          <button
-            className="btn btn-cyan"
-            onClick={handleSimulateTrafficBurst}
-            disabled={isSpiking}
-          >
-            {isSpiking ? '⚡ Simulating Surge...' : '📈 Simulate Traffic Surge'}
-          </button>
-          <button className="btn btn-purple" onClick={handleDeployPatch}>
-            🚀 Trigger Rolling Deploy
-          </button>
-        </div>
-      </section>
-
-      {/* Key Telemetry Stats */}
-      <section className="telemetry-grid">
-        <div className="telemetry-card">
-          <div className="card-header">
-            <span className="card-label">Throughput</span>
-            <span className="card-icon">⚡</span>
-          </div>
-          <div className="metric-val">{requestsPerSec.toLocaleString()}</div>
-          <div className="metric-trend trend-up">
-            ▲ +14.2% vs last hour
-          </div>
-        </div>
-
-        <div className="telemetry-card">
-          <div className="card-header">
-            <span className="card-label">Avg P99 Latency</span>
-            <span className="card-icon">⏱️</span>
-          </div>
-          <div className="metric-val">{selectedRegion.baseLatency} ms</div>
-          <div className="metric-trend trend-neutral">
-            Global Edge Caching Active
-          </div>
-        </div>
-
-        <div className="telemetry-card">
-          <div className="card-header">
-            <span className="card-label">Error Rate</span>
-            <span className="card-icon">🛡️</span>
-          </div>
-          <div className="metric-val">0.001%</div>
-          <div className="metric-trend trend-up">
-            ✓ Nominal Zero Ingress Errors
-          </div>
-        </div>
-
-        <div className="telemetry-card">
-          <div className="card-header">
-            <span className="card-label">Cluster CPU Load</span>
-            <span className="card-icon">📊</span>
-          </div>
-          <div className="metric-val">{cpuLoad}%</div>
-          <div className="metric-trend trend-neutral">
-            Autoscaling Threshold: 80%
-          </div>
-        </div>
-      </section>
-
-      {/* Capacity & Compute Gauges */}
-      <section className="capacity-grid">
-        <div className="capacity-card">
-          <div className="capacity-head">
-            <span>Cluster Compute Pool</span>
-            <strong>{cpuLoad}% Allocated</strong>
-          </div>
-          <div className="progress-track">
-            <div className="progress-fill fill-cyan" style={{ width: `${cpuLoad}%` }}></div>
-          </div>
-        </div>
-
-        <div className="capacity-card">
-          <div className="capacity-head">
-            <span>Memory Utilization</span>
-            <strong>58% (37.1 GB / 64 GB)</strong>
-          </div>
-          <div className="progress-track">
-            <div className="progress-fill fill-purple" style={{ width: '58%' }}></div>
-          </div>
-        </div>
-
-        <div className="capacity-card">
-          <div className="capacity-head">
-            <span>Egress Bandwidth</span>
-            <strong>3.4 Gbps / 10 Gbps</strong>
-          </div>
-          <div className="progress-track">
-            <div className="progress-fill fill-emerald" style={{ width: '34%' }}></div>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Two-Column View: Microservices & Event Stream */}
-      <div className="main-grid">
-        {/* Microservices Fleet */}
-        <section className="section-card">
-          <div className="section-head">
-            <h3>🖥️ Microservices Fleet</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>4 Active Services</span>
+      <div className="cards-grid">
+        {/* Card 1: Interactive Dev Joke */}
+        <section className="fun-card" aria-labelledby="joke-heading">
+          <div className="card-title-row">
+            <h2 id="joke-heading">🎭 Developer Comedy Club</h2>
+            <span className="tag-pill">Joke #{currentJoke.id} of {DEV_JOKES.length}</span>
           </div>
 
-          <div className="services-list">
-            {services.map((svc) => (
-              <div key={svc.id} className="service-item" data-testid={`service-${svc.id}`}>
-                <div className="service-meta">
-                  <span className={`service-dot ${svc.status === 'healthy' ? 'dot-green' : 'dot-amber'}`}></span>
-                  <div className="service-info">
-                    <h4>{svc.name}</h4>
-                    <p>{svc.version} &bull; Latency: {svc.latency}</p>
-                  </div>
-                </div>
+          <p className="joke-setup">{currentJoke.setup}</p>
 
-                <div className="service-stats">
-                  <span className="stat-pill">{svc.pods} Pods</span>
-                  <button
-                    className="toggle-btn"
-                    onClick={() => handleRestartService(svc.id)}
-                    disabled={svc.status === 'restarting'}
-                  >
-                    {svc.status === 'restarting' ? 'Recycling...' : '↻ Restart'}
-                  </button>
-                </div>
-              </div>
-            ))}
+          {showPunchline ? (
+            <div className="punchline-box" data-testid="punchline-box">
+              {currentJoke.punchline}
+            </div>
+          ) : null}
+
+          <div className="joke-actions">
+            {!showPunchline ? (
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowPunchline(true)}
+              >
+                🥁 Reveal Punchline
+              </button>
+            ) : (
+              <button
+                className="btn btn-purple"
+                onClick={handleNextJoke}
+              >
+                Next Joke 🔄
+              </button>
+            )}
+            <button
+              className="btn btn-secondary"
+              onClick={handleNextJoke}
+            >
+              Skip ⏭️
+            </button>
           </div>
         </section>
 
-        {/* Live Activity Stream */}
-        <section className="section-card">
-          <div className="section-head">
-            <h3>📡 Live Event Stream</h3>
-            <div className="log-filters">
-              <button
-                className={`filter-btn ${logFilter === 'all' ? 'active' : ''}`}
-                onClick={() => setLogFilter('all')}
-              >
-                All
-              </button>
-              <button
-                className={`filter-btn ${logFilter === 'deploy' ? 'active' : ''}`}
-                onClick={() => setLogFilter('deploy')}
-              >
-                Deploys
-              </button>
-              <button
-                className={`filter-btn ${logFilter === 'traffic' ? 'active' : ''}`}
-                onClick={() => setLogFilter('traffic')}
-              >
-                Traffic
-              </button>
-            </div>
+        {/* Card 2: Interactive Coffee-O-Meter */}
+        <section className="fun-card" aria-labelledby="coffee-heading">
+          <div className="card-title-row">
+            <h2 id="coffee-heading">☕ Coffee-O-Meter</h2>
+            <span className="tag-pill">Developer Fuel</span>
           </div>
 
-          <div className="log-stream" data-testid="log-stream">
-            {filteredLogs.map((log) => (
-              <div key={log.id} className={`log-entry ${log.type}`}>
-                <div className="log-top">
-                  <strong>{log.title}</strong>
-                  <span>{log.time}</span>
-                </div>
-                <div className="log-msg">{log.message}</div>
+          <div className="coffee-layout">
+            <div className="coffee-icon-box" aria-hidden="true">
+              {coffeeCount === 0 ? '😴' : coffeeCount >= 4 ? '🔥' : '☕'}
+            </div>
+            <div className="coffee-info">
+              <div className="coffee-count-text">
+                {coffeeCount} {coffeeCount === 1 ? 'Cup' : 'Cups'} of Coffee Drank
               </div>
-            ))}
+              <p className="coffee-status-msg" data-testid="coffee-status">
+                {getCoffeeStatus()}
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button className="btn btn-primary" onClick={handleDrinkCoffee}>
+                  ☕ Drink Another Cup
+                </button>
+                <button className="btn btn-secondary" onClick={handleResetCoffee}>
+                  Reset
+                </button>
+              </div>
+            </div>
           </div>
+        </section>
+
+        {/* Card 3: Interactive Poll: Bug or Feature? */}
+        <section className="fun-card" aria-labelledby="poll-heading">
+          <div className="card-title-row">
+            <h2 id="poll-heading">🗳️ The Eternal Debate</h2>
+            <span className="tag-pill">Community Poll</span>
+          </div>
+
+          <p className="poll-question">
+            &ldquo;The code works completely fine on my localhost, but immediately crashes on the server.&rdquo;
+          </p>
+
+          <div className="poll-options">
+            <button
+              className={`poll-btn ${userVoted === 'bug' ? 'voted-bug' : ''}`}
+              onClick={() => handleVote('bug')}
+            >
+              <span>🐛 Obviously a Bug</span>
+              <span className="vote-tally">{bugVotes} Votes</span>
+            </button>
+
+            <button
+              className={`poll-btn ${userVoted === 'feature' ? 'voted-feature' : ''}`}
+              onClick={() => handleVote('feature')}
+            >
+              <span>✨ Undocumented Feature</span>
+              <span className="vote-tally">{featureVotes} Votes</span>
+            </button>
+          </div>
+
+          {userVoted ? (
+            <p style={{ textAlign: 'center', color: '#10b981', fontWeight: 700 }}>
+              🎉 Thanks for voting! Your vote has been counted.
+            </p>
+          ) : null}
+        </section>
+
+        {/* Card 4: Friday Production Panic Button */}
+        <section className="fun-card" aria-labelledby="panic-heading">
+          <div className="card-title-row">
+            <h2 id="panic-heading">🚨 Production Emergency</h2>
+            <span className="tag-pill" style={{ background: '#fee2e2', color: '#dc2626' }}>Do Not Press</span>
+          </div>
+
+          {!isPanicking ? (
+            <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+              <p style={{ marginBottom: '1.25rem', color: 'var(--text-muted)' }}>
+                Did someone accidentally merge to <code>main</code> at 4:59 PM on Friday?
+              </p>
+              <button
+                className="btn btn-danger"
+                style={{ fontSize: '1.1rem', padding: '0.85rem 2rem' }}
+                onClick={() => setIsPanicking(true)}
+              >
+                🚨 Press The Panic Button
+              </button>
+            </div>
+          ) : (
+            <div className="panic-banner" data-testid="panic-banner">
+              <h3>🔥 DON&apos;T PANIC!</h3>
+              <p>Everything is fine! Initiating emergency rollback... It totally works on my machine anyway! 🐕☕</p>
+              <button
+                className="btn btn-secondary"
+                style={{ marginTop: '1rem' }}
+                onClick={() => setIsPanicking(false)}
+              >
+                Phew, False Alarm! Relieve Panic 😌
+              </button>
+            </div>
+          )}
         </section>
       </div>
 
-      {/* Footer Bar */}
-      <footer className="footer-bar">
-        <div className="footer-left">
-          <span>CloudPulse Telemetry Engine</span>
-          <span className="version-pill">v2.4.1</span>
-        </div>
-        <div>
-          <span>Region Ping: <strong>{selectedRegion.baseLatency}ms</strong> &bull; Zero Ingress Dropped</span>
-        </div>
+      {/* Helpful note for students to learn how changing code triggers CI/CD */}
+      <div className="code-hint-box">
+        💡 <strong>Students:</strong> Open <code>frontend/src/App.jsx</code>, add your own custom joke to <code>DEV_JOKES</code>, and push to GitHub. Watch your joke go live in GitHub Actions!
+      </div>
+
+      {/* Cheerful Footer */}
+      <footer className="footer">
+        <p>Made with ☕, ❤️, and zero git merge conflicts.</p>
+        <span className="version-badge">Version 1.0.0</span>
       </footer>
     </div>
   )
