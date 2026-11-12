@@ -104,7 +104,7 @@ export default function App() {
         <div className="nav-content">
           <a href="#" className="brand-logo">
             {/* <span className="brand-icon">☕</span> */}
-            <span>Brew &amp; Bean Co.</span>
+            <span>Brew &amp; Bean</span>
           </a>
 
           <nav>
