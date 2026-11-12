@@ -37,11 +37,11 @@ flowchart LR
         Job1 --> Job2 --> Job3 --> Job4 --> Job5 --> Job6
     end
 
-    subgraph Runtime_Environments["4. Target Environments"]
-        Staging["Staging / Preview (e.g. GitHub Pages / Test Server)"]
-        Prod["Production (Nginx Alpine / Container Platform)"]
-        Job6 --> Staging
-        Job6 --> Prod
+    subgraph Runtime_Environments["4. Target AWS Infrastructure"]
+        ECR["AWS ECR Private Registry\n322473970206.dkr.ecr.ap-southeast-2.amazonaws.com\n/devops_program_cc_fe"]
+        EC2["AWS EC2 Production Server\nUbuntu 24.04 (13.210.209.34)\nPort 80 (Nginx Alpine Container)"]
+        Job6 -->|1. Push Docker Image| ECR
+        ECR -->|2. Pull & Run| EC2
     end
 
     PR --> CICD_Pipeline
@@ -67,7 +67,7 @@ The pipeline is segmented into distinct, isolated jobs so students can visualize
 | **3. Build & Package** | Compiles production assets into `dist/` | Understand artifact creation & minification |
 | **4. Security Audit** | Runs `npm audit` for known CVE vulnerabilities | Learn DevSecOps principles (shifting security left) |
 | **5. Container Packaging** | Builds Docker image using multi-stage Dockerfile | Understand immutable container packaging |
-| **6. Deployment** | Deploys static build to target host / GitHub Pages | Understand automated continuous delivery (CD) |
+| **6. Deployment** | Authenticates with AWS ECR, pushes image, and launches container on EC2 (`13.210.209.34`) | Understand production CD, container registries (ECR), and cloud server automation |
 
 ---
 

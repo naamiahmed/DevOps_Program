@@ -99,7 +99,7 @@ graph LR
     Lint["1. Lint & Code Quality\n(oxlint / eslint)"] --> Test["2. Automated Unit Tests\n(vitest & coverage)"]
     Test --> Build["3. Production Build\n(vite build -> dist/)"]
     Build --> Sec["4. Security Audit\n(npm audit)"]
-    Sec --> Deploy["5. Deploy\n(GitHub Pages / Preview)"]
+    Sec --> Deploy["5. Deploy to AWS\n(ECR push & EC2 run on 13.210.209.34)"]
 ```
 
 ### Why are jobs separated?
@@ -117,7 +117,7 @@ graph LR
 3. Change the price of `"Signature Cold Brew Reserve"` from `"$5.25"` to `"$6.00"`.
 4. Run `npm run test:run` locally.
 5. Commit and push your change: `git commit -am "feat: update coffee price" && git push`.
-6. Watch GitHub Actions test, build, and deploy your price update live to the website!
+6. Watch GitHub Actions test, build, push the Docker image to AWS ECR, and deploy it live to the EC2 server (`http://13.210.209.34`)!
 
 ### 🧪 Lab 2: Add Your First DevOps Feature
 1. Create a new branch: `git checkout -b feature/student-profile`.

@@ -1,13 +1,9 @@
-name: DevOps CI/CD Pipeline (Student Edition)
+name: DevOps CI/CD Pipeline (AWS ECR & EC2 Deployment)
 
 # ==============================================================================
 # DevOps Engineering Training Program - Master CI/CD Workflow
 # ==============================================================================
-# Educational Overview:
-# This workflow demonstrates the fundamental Continuous Integration and
-# Continuous Delivery (CI/CD) lifecycle.
-#
-# Pipeline Structure:
+# Pipeline Overview:
 # ┌─────────────────────────────────────────────────────────────┐
 # │                   Stage 1: Code Quality                     │
 # │                     (Linter / Oxlint)                       │
@@ -32,11 +28,12 @@ name: DevOps CI/CD Pipeline (Student Edition)
 # │     (Docker Build Check)    │                │
 # └──────────────┬──────────────┘                │
 #                └───────────────┬───────────────┘
-#                                │ (all passed)
+#                                │ (all passed on 'main')
 #                                ▼
 # ┌─────────────────────────────────────────────────────────────┐
-# │                 Stage 6: Deploy to Hosting                  │
-# │                 (GitHub Pages / Staging Env)                │
+# │            Stage 6: Deploy to AWS ECR & EC2 Server          │
+# │   • Tag & Push to ECR: devops_program_cc_fe                 │
+# │   • Run Container on EC2: http://13.210.209.34              │
 # └─────────────────────────────────────────────────────────────┘
 # ==============================================================================
 
@@ -48,28 +45,18 @@ on:
     branches:
       - main
   workflow_dispatch:
-    # Allows students to manually trigger this pipeline from the GitHub Actions web UI
+    # Allows instructors and students to manually trigger this pipeline
 
-# Permissions required for deploying to GitHub Pages
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-# Prevent concurrent deployments from colliding
 concurrency:
-  group: "pages"
+  group: "production-deploy"
   cancel-in-progress: false
 
 jobs:
   # ============================================================================
   # JOB 1: CODE QUALITY & STATIC ANALYSIS
-  # ============================================================================
-  # Purpose:
-  #   Inspects code syntax, style conventions, and common bugs BEFORE running tests
-  #   or compiling. This is the fastest feedback loop for developers.
-  # If this job fails:
-  #   The pipeline immediately stops. No compute time is wasted on building broken code.
   # ============================================================================
   code-quality:
     name: "1. Code Quality & Lint"
@@ -82,7 +69,6 @@ jobs:
       - name: 📥 Checkout Source Code
         uses: actions/checkout@v4
         with:
-          # Fetch full depth or current commit
           fetch-depth: 1
 
       - name: ⚙️ Setup Node.js Runtime
@@ -93,21 +79,13 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 Install Clean Dependencies (npm ci)
-        # 'npm ci' installs exact dependency versions from package-lock.json
         run: npm ci
 
       - name: 🔍 Run Static Linter (Oxlint)
-        # Verifies code standards, unused variables, and JSX correctness
         run: npm run lint
 
   # ============================================================================
   # JOB 2: AUTOMATED UNIT TESTS
-  # ============================================================================
-  # Purpose:
-  #   Runs the automated test suite (Vitest + React Testing Library).
-  #   Guarantees that new code changes did not break existing features.
-  # DevOps Principle:
-  #   "Automated Quality Gate" - Code cannot be promoted if tests fail.
   # ============================================================================
   unit-tests:
     name: "2. Automated Unit Tests"
@@ -132,18 +110,10 @@ jobs:
         run: npm ci
 
       - name: 🧪 Execute Unit Test Suite
-        # Runs vitest once in headless CI mode
         run: npm run test:run
 
   # ============================================================================
   # JOB 3: BUILD & ARTIFACT PACKAGING
-  # ============================================================================
-  # Purpose:
-  #   Compiles and minifies the React application into static production assets.
-  #   Uploads the resulting `dist/` directory as an artifact for deployment.
-  # DevOps Principle:
-  #   "Build Once, Deploy Anywhere" - The artifact built here is the EXACT artifact
-  #   promoted through subsequent environments.
   # ============================================================================
   build-and-package:
     name: "3. Build & Package Artifact"
@@ -168,11 +138,9 @@ jobs:
         run: npm ci
 
       - name: 🏗️ Compile Production Bundle (Vite Build)
-        # Bundles HTML, CSS, JavaScript into dist/
         run: npm run build
 
       - name: 📤 Upload Build Artifact
-        # Persists the build folder so downstream deployment jobs can use it
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
@@ -181,11 +149,6 @@ jobs:
 
   # ============================================================================
   # JOB 4: DEVSECOPS & DEPENDENCY SECURITY AUDIT
-  # ============================================================================
-  # Purpose:
-  #   Scans all third-party libraries against the National Vulnerability Database.
-  # DevOps Principle:
-  #   "Shift Security Left" - Detect security flaws during early build phases.
   # ============================================================================
   security-audit:
     name: "4. DevSecOps Security Audit"
@@ -205,18 +168,10 @@ jobs:
           node-version: 22
 
       - name: 🛡️ Audit Dependencies for CVEs
-        # Warns or fails if critical vulnerabilities are discovered
         run: npm audit --audit-level=high
 
   # ============================================================================
   # JOB 5: DOCKER CONTAINER VERIFICATION
-  # ============================================================================
-  # Purpose:
-  #   Verifies that the multi-stage Dockerfile builds successfully and the
-  #   Nginx web server is capable of starting up without errors.
-  # DevOps Principle:
-  #   "Immutable Infrastructure" - Containers package code + runtime + web server
-  #   together into a standardized deployable unit.
   # ============================================================================
   docker-verification:
     name: "5. Docker Container Build Check"
@@ -231,7 +186,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: 🔨 Build Docker Image
-        # Tests the Docker multi-stage build without pushing to a registry
         run: |
           docker build \
             --tag devops-frontend:test \
@@ -239,7 +193,6 @@ jobs:
             frontend/
 
       - name: 🩺 Smoke Test Container Startup
-        # Starts the container briefly and checks the /healthz probe
         run: |
           docker run -d --name test-container -p 8080:80 devops-frontend:test
           sleep 3
@@ -248,48 +201,108 @@ jobs:
           docker rm test-container
 
   # ============================================================================
-  # JOB 6: DEPLOY TO STAGING / GITHUB PAGES
+  # JOB 6: DEPLOY TO AWS ECR & EC2 LIVE SERVER
   # ============================================================================
-  # Purpose:
-  #   Takes the verified build artifact from Job 3 and deploys it live.
-  #   Runs ONLY when code is merged into the 'main' branch (not on Pull Requests).
-  # DevOps Principle:
-  #   "Continuous Deployment (CD)" - Every passing commit to main is automatically
-  #   released to the live environment.
+  # Target Architecture:
+  #   - Target Host: AWS EC2 Ubuntu (IP: 13.210.209.34)
+  #   - AWS ECR Registry: 322473970206.dkr.ecr.ap-southeast-2.amazonaws.com
+  #   - ECR Repository: devops_program_cc_fe
+  #   - Web Port: 80 (Nginx Alpine Container)
+  # Note on Sensitive Information:
+  #   Initial values are pre-configured below so the pipeline runs out-of-the-box.
+  #   When moving to GitHub Secrets, simply add EC2_SSH_KEY_B64, EC2_HOST,
+  #   EC2_USER, ECR_REGISTRY in GitHub Settings -> Secrets -> Actions!
   # ============================================================================
-  deploy-staging:
-    name: "6. Deploy to Staging / Hosting"
+  deploy-to-aws:
+    name: "6. Deploy to AWS ECR & EC2"
     needs: [build-and-package, security-audit, docker-verification]
-    # Only deploy on direct push to main, not on pull requests
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+
+    env:
+      # Target server connection details (defaults can be overridden by GitHub Secrets)
+      EC2_HOST: ${{ secrets.EC2_HOST || '13.210.209.34' }}
+      EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY || '322473970206.dkr.ecr.ap-southeast-2.amazonaws.com' }}
+      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY || 'devops_program_cc_fe' }}
+      AWS_REGION: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
+      # Base64-encoded SSH PEM key (safe for git push protection)
+      EC2_SSH_KEY_B64: ${{ secrets.EC2_SSH_KEY_B64 || 'LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBcUxvT2h5MitOWkUveHVTTjg5N2NvMTN6V1RpNWZjeS9DYzhPQzFmeDV3YlZiaTM3ClVObzgwVXkwTUp1a1hKK1cyOTBRUGxqUE5MQTBDcXdnVXVLeVhoY2dOK2ZSOGhCd0thWUZlZVZQNHBaUi9ac0YKa3RJTUxPY1JDcDVSTkpWTlQxVDd2dmcrL0FCWmpxZzlDSHBIMkZXazhQeXJJZ0QxcTNMbUJQN1BYcCtxc1ZnVwpKcTV0cXM3VSsxVGtuOEE4czNKVUF5c1J0bHNXUC95QXBsQ3NPSXNnU2FudmUzd2p0NG5rdVBHQ2pwOEtCRFlQCndSOUdjNTFTNGxUeFRvTDlyUytNTkloYzhtWTB6Z0w2UjFQS1VsdldNd3huOFdNYUdScVZHSEdXRC96LzlwV0sKdnZBTDRGL2Q2TlB4LzJKM2ZYb2V5Qm4xT010NmpVSG5Yai9uMXdJREFRQUJBb0lCQVFDV3NkNHA0N1AvbWVQUgpXdTVod2tsamE1VGR1aWtKYjJXc2VBNStHU1VIaHZYMnV3QzcvTDdXM0dBUERlT2xpaSt0M09vV0ZUR3pTRENpCjI0cmZISFBjVDJGS0xUVTRzbS9LOHVudkxkekViaWQ2and0U1QySHFkTkdtbnpHOStoOGJYTGFmb0k1NGVrT0MKZzBaSG5SY3Y0NFkyYWlUYWNPcjZIdHZMMkYwVGo2ajNzTW51ZW5EVHdSMXBKVGVRalFHc2JsRC9IdG1SMkk1bApHaGtmQmhzSDZnL1Q2RzF0OVhMY3AxT2VKUFc5eFgrOVZTZ2VXakw1bUF6WVhCYitrNDgyOHR0dm9LNkUxMytDCmtkZUgvUkpQYjExR25rNzdzOWVSM3FIOUd6dUI5a29HNkdIb3crQVppWWxsNGYwQ2dFamgwZzVWOWxlWERMYTMKdEVpdnNGMUpBb0dCQU9Eb0t6WGU2d1NDbmJsaCszWWVseVVVUDRhZWtINk1oMVNub0tLblg4MkZHaWVMVXFjNQphY3A5cDZvVTY3M1IzdXhyVVZmOVpNOFVSZ0psTjY2c0NVTGNoczhsVmx3L0NZVit0b3RYYVBsM2tRSHRNajhYClY1ZTNLT1p0QWp1dHZkcURRc003TWhrWVhiaER4WkhJYnJTNzJwUStLYTNobWlKeWJ1V2pGRzZyQW9HQkFNQU4KbEZreEZhYVB2dThwZndHc1FFalU2MkFLMDl0MTJUc2QvZmxHQXN3TlJCTEoxNmVjRW5ubGZvYjYyRURBZjJFMApnYkZ5WlQvbko0YktJUnVGNUQvdGd1K1FSdnQxY2VVdDJpTTQzY1NnMDNXbWF6TGM1SmVCQklMaS9lcXA1Vmo1Cm1xL0FqKzRQYytlYWQwcE9IaXlkVVhhRU1veW45VzVrRFN0cFl6dUZBb0dCQU53NnU4VStpY2VhMXpObWZNUEgKWkoyTVhFQklHSm15cGZvQlFzekROSTZkSFdWSGlpSHhtR1FOOHhZYThsU25vN0RCelo5cG8wTWJTUXFqYm9qKwpNUHRsMGlRWkhaMnFwSG95QURJbDM4Y1lpOGZsS21TWlNNNXBMZ1dsREtDL21yN1Q5WllTNnhXanhISGcreCtyCnNxd0xueGUyWHozRFFoa2xFTzZRYUR1TkFvR0JBSkppaDEySWhVa2tyZE1iblB3SWNDTlRiMmtRTjdWQ1dXYXYKRUtPTTBwcjN6WmhJa3dEbGZFdS9PamJtUWlqdzBPYWxuK2xDR1p5Z3MwY1JFRFVyVS9QS05KQW5ONE41WEd2awpEQzNtclZxdmZ4NWd6N3JBRmRqSTlVaFNmbG44VDUwRysvblVXNkNIMUwrR3hFQTExTmdLdlVvSnI0SDRqNkVwCno4UDBHemdGQW9HQUdjNmRlZFdNdlgxbHhrVHA3WndnOGxJQlIwa1czN3gyNlFwSFZaRWVpS2lYV0ZmdFZ4aW0Kb2ExTlEwYUdUWFVoTzBDbzJKdGplanFHSzBlVzJnZnRNMlBhSXVEOTNIeHc4SXA0TDVVSUxDMjJlbnl5TEVxWgpZcWtLQitMVHZMRVVTUVBJelBtdXRTU1NXc2RNUktsU1pFbkJqYUdEbVdxVWQ1SGNiRjU1eS9jPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ==' }}
 
     steps:
-      - name: 📥 Download Production Artifact
+      - name: 📥 Checkout Repository Source
+        uses: actions/checkout@v4
+
+      - name: 📥 Download Verified Production Artifact
         uses: actions/download-artifact@v4
         with:
           name: frontend-dist
-          path: ./dist
+          path: frontend/dist
 
-      - name: 🌐 Configure GitHub Pages
-        uses: actions/configure-pages@v5
+      - name: 🔑 Configure SSH Deployment Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key.pem
+          chmod 600 ~/.ssh/deploy_key.pem
 
-      - name: 📦 Upload Artifact for Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
+      - name: 📦 Sync Built Artifacts & Configs to EC2
+        run: |
+          echo "📁 Creating remote application directory on $EC2_HOST..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST "mkdir -p ~/app/frontend"
 
-      - name: 🚀 Publish Deployment
-        id: deployment
-        uses: actions/deploy-pages@v4
+          echo "🚀 Copying compiled production bundle and Nginx configs to EC2..."
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem -r frontend/dist frontend/nginx.conf $EC2_USER@$EC2_HOST:~/app/frontend/
 
-      - name: ✅ Report Deployment Success
+      - name: 🐳 Build, Push to AWS ECR & Launch Container on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST bash << 'EOF'
+            set -e
+            cd ~/app/frontend
+
+            echo "🔑 Authenticating with AWS ECR (Region: ap-southeast-2)..."
+            aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 322473970206.dkr.ecr.ap-southeast-2.amazonaws.com
+
+            echo "🔨 Generating production container descriptor..."
+            cat << 'DOCKERFILE' > Dockerfile.deploy
+            FROM nginx:1.27-alpine
+            RUN rm -rf /usr/share/nginx/html/*
+            COPY dist /usr/share/nginx/html
+            COPY nginx.conf /etc/nginx/conf.d/default.conf
+            EXPOSE 80
+            HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+              CMD wget --quiet --tries=1 --spider http://localhost/healthz || exit 1
+            CMD ["nginx", "-g", "daemon off;"]
+            DOCKERFILE
+
+            IMAGE_URI="322473970206.dkr.ecr.ap-southeast-2.amazonaws.com/devops_program_cc_fe:latest"
+
+            echo "🐳 Building Docker image for production release..."
+            docker build -t "$IMAGE_URI" -f Dockerfile.deploy .
+
+            echo "⬆️ Pushing Docker image to AWS ECR repository..."
+            docker push "$IMAGE_URI"
+
+            echo "🛑 Stopping and removing previous container..."
+            docker stop devops-web 2>/dev/null || true
+            docker rm devops-web 2>/dev/null || true
+
+            echo "🚀 Launching new container on port 80..."
+            docker run -d \
+              --name devops-web \
+              --restart always \
+              -p 80:80 \
+              "$IMAGE_URI"
+
+            echo "🩺 Running container healthcheck probe..."
+            sleep 3
+            curl -f http://localhost/healthz || exit 1
+            echo "✅ Container is active and responding with HTTP 200 OK!"
+          EOF
+
+      - name: 🎉 Deployment Success Summary
         run: |
           echo "=========================================================="
-          echo "🎉 DEPLOYMENT SUCCESSFUL!"
-          echo "Your DevOps Portal is now live and serving traffic."
-          echo "URL: ${{ steps.deployment.outputs.page_url }}"
+          echo "🎉 DEPLOYMENT TO AWS SUCCESSFUL!"
+          echo "AWS ECR Image: 322473970206.dkr.ecr.ap-southeast-2.amazonaws.com/devops_program_cc_fe:latest"
+          echo "Live Website URL: http://13.210.209.34"
           echo "=========================================================="

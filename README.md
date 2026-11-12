@@ -51,7 +51,7 @@ graph TD
         J3["Job 3: Build & Package\n(vite compiles dist/ & uploads artifact)"]
         J4["Job 4: DevSecOps Audit\n(npm audit checks for CVEs)"]
         J5["Job 5: Docker Container Check\n(builds Alpine image & healthcheck probe)"]
-        J6["Job 6: Deploy to Hosting\n(publishes verified artifact to GitHub Pages)"]
+        J6["Job 6: Deploy to AWS ECR & EC2\n(pushes to ECR & runs container on 13.210.209.34)"]
 
         J1 -->|Success| J2
         J2 -->|Success| J3
@@ -69,7 +69,7 @@ graph TD
 | **`build-and-package`** | Compiles JSX/CSS into static bundle (`dist/`) and uploads as pipeline artifact. | **Build Once:** Downstream jobs deploy the exact verified bundle without re-compiling. |
 | **`security-audit`** | Runs `npm audit` against the National Vulnerability Database. | **Shift Left:** Identifies third-party security vulnerabilities early. |
 | **`docker-verification`** | Builds the multi-stage Dockerfile and validates the `/healthz` probe. | **Immutable Delivery:** Verifies the application container runs reliably on Linux. |
-| **`deploy-staging`** | Deploys static build to GitHub Pages or staging server. | **Continuous Delivery:** Releases software automatically upon merging to `main`. |
+| **`deploy-to-aws`** | Authenticates with AWS ECR, pushes the image, and launches the container on EC2 (`http://13.210.209.34`). | **Continuous Delivery:** Releases and runs software automatically upon merging to `main`. |
 
 ---
 
