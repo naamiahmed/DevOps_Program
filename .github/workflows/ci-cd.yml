@@ -32,8 +32,8 @@ name: DevOps CI/CD Pipeline (AWS ECR & EC2 Deployment)
 #                                ▼
 # ┌─────────────────────────────────────────────────────────────┐
 # │            Stage 6: Deploy to AWS ECR & EC2 Server          │
-# │   • Tag & Push to ECR: devops_program_cc_fe                 │
-# │   • Run Container on EC2: http://13.210.209.34              │
+# │   • Authenticate, Tag & Push to Amazon ECR                  │
+# │   • Launch Live Production Container via SSH                │
 # └─────────────────────────────────────────────────────────────┘
 # ==============================================================================
 
@@ -203,15 +203,13 @@ jobs:
   # ============================================================================
   # JOB 6: DEPLOY TO AWS ECR & EC2 LIVE SERVER
   # ============================================================================
-  # Target Architecture:
-  #   - Target Host: AWS EC2 Ubuntu (IP: 13.210.209.34)
-  #   - AWS ECR Registry: 322473970206.dkr.ecr.ap-southeast-2.amazonaws.com
-  #   - ECR Repository: devops_program_cc_fe
-  #   - Web Port: 80 (Nginx Alpine Container)
-  # Note on Sensitive Information:
-  #   Initial values are pre-configured below so the pipeline runs out-of-the-box.
-  #   When moving to GitHub Secrets, simply add EC2_SSH_KEY_B64, EC2_HOST,
-  #   EC2_USER, ECR_REGISTRY in GitHub Settings -> Secrets -> Actions!
+  # Purpose:
+  #   Authenticates to Amazon ECR, builds & pushes the production Docker image,
+  #   and connects to the AWS EC2 server via SSH to launch the container.
+  #
+  # Security Best Practice:
+  #   All sensitive credentials (SSH key, host IP, ECR registry, region, port)
+  #   are securely injected via GitHub Actions Repository Secrets.
   # ============================================================================
   deploy-to-aws:
     name: "6. Deploy to AWS ECR & EC2"
@@ -220,14 +218,13 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Target server connection details (defaults can be overridden by GitHub Secrets)
-      EC2_HOST: ${{ secrets.EC2_HOST || '13.210.209.34' }}
-      EC2_USER: ${{ secrets.EC2_USER || 'ubuntu' }}
-      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY || '322473970206.dkr.ecr.ap-southeast-2.amazonaws.com' }}
-      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY || 'devops_program_cc_fe' }}
-      AWS_REGION: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
-      # Base64-encoded SSH PEM key (safe for git push protection)
-      EC2_SSH_KEY_B64: ${{ secrets.EC2_SSH_KEY_B64 || 'LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBcUxvT2h5MitOWkUveHVTTjg5N2NvMTN6V1RpNWZjeS9DYzhPQzFmeDV3YlZiaTM3ClVObzgwVXkwTUp1a1hKK1cyOTBRUGxqUE5MQTBDcXdnVXVLeVhoY2dOK2ZSOGhCd0thWUZlZVZQNHBaUi9ac0YKa3RJTUxPY1JDcDVSTkpWTlQxVDd2dmcrL0FCWmpxZzlDSHBIMkZXazhQeXJJZ0QxcTNMbUJQN1BYcCtxc1ZnVwpKcTV0cXM3VSsxVGtuOEE4czNKVUF5c1J0bHNXUC95QXBsQ3NPSXNnU2FudmUzd2p0NG5rdVBHQ2pwOEtCRFlQCndSOUdjNTFTNGxUeFRvTDlyUytNTkloYzhtWTB6Z0w2UjFQS1VsdldNd3huOFdNYUdScVZHSEdXRC96LzlwV0sKdnZBTDRGL2Q2TlB4LzJKM2ZYb2V5Qm4xT010NmpVSG5Yai9uMXdJREFRQUJBb0lCQVFDV3NkNHA0N1AvbWVQUgpXdTVod2tsamE1VGR1aWtKYjJXc2VBNStHU1VIaHZYMnV3QzcvTDdXM0dBUERlT2xpaSt0M09vV0ZUR3pTRENpCjI0cmZISFBjVDJGS0xUVTRzbS9LOHVudkxkekViaWQ2and0U1QySHFkTkdtbnpHOStoOGJYTGFmb0k1NGVrT0MKZzBaSG5SY3Y0NFkyYWlUYWNPcjZIdHZMMkYwVGo2ajNzTW51ZW5EVHdSMXBKVGVRalFHc2JsRC9IdG1SMkk1bApHaGtmQmhzSDZnL1Q2RzF0OVhMY3AxT2VKUFc5eFgrOVZTZ2VXakw1bUF6WVhCYitrNDgyOHR0dm9LNkUxMytDCmtkZUgvUkpQYjExR25rNzdzOWVSM3FIOUd6dUI5a29HNkdIb3crQVppWWxsNGYwQ2dFamgwZzVWOWxlWERMYTMKdEVpdnNGMUpBb0dCQU9Eb0t6WGU2d1NDbmJsaCszWWVseVVVUDRhZWtINk1oMVNub0tLblg4MkZHaWVMVXFjNQphY3A5cDZvVTY3M1IzdXhyVVZmOVpNOFVSZ0psTjY2c0NVTGNoczhsVmx3L0NZVit0b3RYYVBsM2tRSHRNajhYClY1ZTNLT1p0QWp1dHZkcURRc003TWhrWVhiaER4WkhJYnJTNzJwUStLYTNobWlKeWJ1V2pGRzZyQW9HQkFNQU4KbEZreEZhYVB2dThwZndHc1FFalU2MkFLMDl0MTJUc2QvZmxHQXN3TlJCTEoxNmVjRW5ubGZvYjYyRURBZjJFMApnYkZ5WlQvbko0YktJUnVGNUQvdGd1K1FSdnQxY2VVdDJpTTQzY1NnMDNXbWF6TGM1SmVCQklMaS9lcXA1Vmo1Cm1xL0FqKzRQYytlYWQwcE9IaXlkVVhhRU1veW45VzVrRFN0cFl6dUZBb0dCQU53NnU4VStpY2VhMXpObWZNUEgKWkoyTVhFQklHSm15cGZvQlFzekROSTZkSFdWSGlpSHhtR1FOOHhZYThsU25vN0RCelo5cG8wTWJTUXFqYm9qKwpNUHRsMGlRWkhaMnFwSG95QURJbDM4Y1lpOGZsS21TWlNNNXBMZ1dsREtDL21yN1Q5WllTNnhXanhISGcreCtyCnNxd0xueGUyWHozRFFoa2xFTzZRYUR1TkFvR0JBSkppaDEySWhVa2tyZE1iblB3SWNDTlRiMmtRTjdWQ1dXYXYKRUtPTTBwcjN6WmhJa3dEbGZFdS9PamJtUWlqdzBPYWxuK2xDR1p5Z3MwY1JFRFVyVS9QS05KQW5ONE41WEd2awpEQzNtclZxdmZ4NWd6N3JBRmRqSTlVaFNmbG44VDUwRysvblVXNkNIMUwrR3hFQTExTmdLdlVvSnI0SDRqNkVwCno4UDBHemdGQW9HQUdjNmRlZFdNdlgxbHhrVHA3WndnOGxJQlIwa1czN3gyNlFwSFZaRWVpS2lYV0ZmdFZ4aW0Kb2ExTlEwYUdUWFVoTzBDbzJKdGplanFHSzBlVzJnZnRNMlBhSXVEOTNIeHc4SXA0TDVVSUxDMjJlbnl5TEVxWgpZcWtLQitMVHZMRVVTUVBJelBtdXRTU1NXc2RNUktsU1pFbkJqYUdEbVdxVWQ1SGNiRjU1eS9jPQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ==' }}
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+      ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      APP_PORT: ${{ secrets.APP_PORT || '80' }}
 
     steps:
       - name: 📥 Checkout Repository Source
@@ -242,12 +239,16 @@ jobs:
       - name: 🔑 Configure SSH Deployment Key
         run: |
           mkdir -p ~/.ssh
-          echo "$EC2_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key.pem
+          if echo "$EC2_SSH_KEY" | grep -q "BEGIN RSA PRIVATE KEY"; then
+            echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key.pem
+          else
+            echo "$EC2_SSH_KEY" | base64 -d > ~/.ssh/deploy_key.pem
+          fi
           chmod 600 ~/.ssh/deploy_key.pem
 
       - name: 📦 Sync Built Artifacts & Configs to EC2
         run: |
-          echo "📁 Creating remote application directory on $EC2_HOST..."
+          echo "📁 Creating remote application directory on target host..."
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST "mkdir -p ~/app/frontend"
 
           echo "🚀 Copying compiled production bundle, Nginx configs, and Dockerfile to EC2..."
@@ -255,14 +256,15 @@ jobs:
 
       - name: 🐳 Build, Push to AWS ECR & Launch Container on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key.pem $EC2_USER@$EC2_HOST \
+            "ECR_REGISTRY='$ECR_REGISTRY' ECR_REPOSITORY='$ECR_REPOSITORY' AWS_REGION='$AWS_REGION' APP_PORT='$APP_PORT' bash" << 'EOF'
             set -e
             cd ~/app/frontend
 
-            echo "🔑 Authenticating with AWS ECR (Region: ap-southeast-2)..."
-            aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 322473970206.dkr.ecr.ap-southeast-2.amazonaws.com
+            echo "🔑 Authenticating with AWS ECR (Region: $AWS_REGION)..."
+            aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
-            IMAGE_URI="322473970206.dkr.ecr.ap-southeast-2.amazonaws.com/devops_program_cc_fe:latest"
+            IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
 
             echo "🐳 Building Docker image for production release..."
             docker build --no-cache -t "$IMAGE_URI" -f Dockerfile.deploy .
@@ -274,11 +276,11 @@ jobs:
             docker stop devops-web 2>/dev/null || true
             docker rm devops-web 2>/dev/null || true
 
-            echo "🚀 Launching new container on port 80..."
+            echo "🚀 Launching new container on port $APP_PORT..."
             docker run -d \
               --name devops-web \
               --restart always \
-              -p 80:80 \
+              -p ${APP_PORT}:80 \
               "$IMAGE_URI"
 
             echo "🩺 Running container healthcheck probe..."
@@ -291,6 +293,6 @@ jobs:
         run: |
           echo "=========================================================="
           echo "🎉 DEPLOYMENT TO AWS SUCCESSFUL!"
-          echo "AWS ECR Image: 322473970206.dkr.ecr.ap-southeast-2.amazonaws.com/devops_program_cc_fe:latest"
-          echo "Live Website URL: http://13.210.209.34"
+          echo "AWS ECR Image: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          echo "Live Website URL: http://$EC2_HOST:$APP_PORT"
           echo "=========================================================="
